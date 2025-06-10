@@ -27,8 +27,6 @@ async function baseRequest<T>(endpoint: string, options: RequestInit = {}, token
   }
 }
 
-// --- ARQUIVO TOTALMENTE CORRIGIDO COM TIPAGEM EXPLÍCITA ---
-
 const publicApi = {
   getPizzaTypes: () => baseRequest<PizzaType[]>('/menu/types', {}, null),
   getPizzaFlavors: () => baseRequest<PizzaFlavor[]>('/menu/flavors', {}, null),

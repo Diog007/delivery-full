@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Eye,
@@ -24,7 +23,7 @@ import {
   Filter,
   Clock,
   MapPin,
-  Phone,
+  Mail, // Trocado de Phone para Mail
   CreditCard,
   Banknote,
 } from "lucide-react";
@@ -49,7 +48,6 @@ export const OrderManagement = () => {
       filtered = orders.filter((order) => order.status === statusFilter);
     }
 
-    // Sort by creation date (newest first)
     filtered = filtered.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -134,7 +132,7 @@ export const OrderManagement = () => {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>Pedido #{selectedOrder.id}</span>
+              <span>Pedido #{selectedOrder.id.substring(0,8)}</span>
               <OrderStatusBadge status={selectedOrder.status} />
             </DialogTitle>
           </DialogHeader>
@@ -151,11 +149,11 @@ export const OrderManagement = () => {
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Data/Hora:</span>
-                    <span>{formatDateTime(selectedOrder.createdAt)}</span>
+                    <span>{formatDateTime(new Date(selectedOrder.createdAt))}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tempo decorrido:</span>
-                    <span>{getTimeAgo(selectedOrder.createdAt)}</span>
+                    <span>{getTimeAgo(new Date(selectedOrder.createdAt))}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tipo:</span>
@@ -174,29 +172,22 @@ export const OrderManagement = () => {
                 </CardContent>
               </Card>
 
+              {/* --- BLOCO DE CLIENTE CORRIGIDO --- */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center">
-                    <Phone className="h-4 w-4 mr-2" />
+                    <Mail className="h-4 w-4 mr-2" />
                     Cliente
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div>
                     <span className="text-gray-600">Nome:</span>
-                    <p className="font-medium">{selectedOrder.customer.name}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">WhatsApp:</span>
-                    <p>{selectedOrder.customer.whatsapp}</p>
+                    <p className="font-medium">{selectedOrder.customerUser?.name}</p>
                   </div>
                   <div>
                     <span className="text-gray-600">E-mail:</span>
-                    <p>{selectedOrder.customer.email}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">CPF:</span>
-                    <p>{selectedOrder.customer.cpf}</p>
+                    <p>{selectedOrder.customerUser?.email}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -405,7 +396,7 @@ export const OrderManagement = () => {
                     <SelectItem value="received">Pedido Recebido</SelectItem>
                     <SelectItem value="preparing">Em Preparo</SelectItem>
                     <SelectItem value="out_for_delivery">
-                      Saiu para Entrega
+                      Saiu para Entrega / Retirada
                     </SelectItem>
                     <SelectItem value="completed">Finalizado</SelectItem>
                     <SelectItem value="cancelled">Cancelado</SelectItem>
@@ -443,7 +434,7 @@ export const OrderManagement = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="font-semibold text-lg">
-                          Pedido #{order.id}
+                          Pedido #{order.id.substring(0,8)}
                         </h3>
                         <OrderStatusBadge status={order.status} />
                         <Badge variant="outline">
@@ -455,14 +446,15 @@ export const OrderManagement = () => {
 
                       <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-600">
                         <div>
-                          <strong>Cliente:</strong> {order.customer.name}
+                          {/* --- CORREÇÃO APLICADA AQUI --- */}
+                          <strong>Cliente:</strong> {order.customerUser?.name}
                         </div>
                         <div>
                           <strong>Total:</strong>{" "}
                           {formatPrice(order.totalAmount)}
                         </div>
                         <div>
-                          <strong>Criado:</strong> {getTimeAgo(order.createdAt)}
+                          <strong>Criado:</strong> {getTimeAgo(new Date(order.createdAt))}
                         </div>
                       </div>
 

@@ -27,18 +27,11 @@ public class OrderController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * --- ENDPOINT CORRIGIDO ---
-     * Endpoint para um CLIENTE criar um pedido. Agora requer autenticação.
-     * O 'Principal' é injetado pelo Spring Security e contém o email do usuário logado.
-     */
     @PostMapping
     public ResponseEntity<ResponseDtos.OrderResponseDto> createOrder(@RequestBody OrderDtos.CreateOrderDto orderDto, Principal principal) {
-        // Validação para garantir que o usuário está autenticado
         if (principal == null || principal.getName() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        // Passa o email do usuário (principal.getName()) para o serviço
         Order createdOrder = orderService.createOrder(orderDto, principal.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(OrderMapper.toDto(createdOrder));
     }

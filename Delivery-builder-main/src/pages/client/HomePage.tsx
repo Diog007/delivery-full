@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "@/components/Layout"; // <-- CORREÇÃO APLICADA AQUI
+import { Layout } from "@/components/Layout";
 import { PizzaCard } from "@/components/PizzaCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PizzaType } from "@/types";
-import apiService from "@/services/apiService";
+import { api } from "@/services/apiService";
 
 export const HomePage = () => {
   const [pizzaTypes, setPizzaTypes] = useState<PizzaType[]>([]);
@@ -13,7 +13,7 @@ export const HomePage = () => {
   useEffect(() => {
     const fetchTypes = async () => {
       try {
-        const types = await apiService.getPizzaTypes();
+        const types = await api.public.getPizzaTypes();
         // Garante que a resposta seja um array antes de setar o estado
         if (Array.isArray(types)) {
           setPizzaTypes(types);

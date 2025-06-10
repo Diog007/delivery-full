@@ -30,16 +30,10 @@ public class CustomerProfileController {
         if (authentication == null || authentication.getName() == null) {
             return ResponseEntity.ok(Collections.emptyList());
         }
-
-        // 1. Delega a busca de pedidos para o serviço
         List<Order> orders = customerService.findOrdersForCustomer(authentication.getName());
-
-        // 2. Mapeia a lista de entidades para uma lista de DTOs
         List<ResponseDtos.OrderResponseDto> orderDtos = orders.stream()
                 .map(OrderMapper::toDto)
                 .collect(Collectors.toList());
-
-        // 3. Retorna a lista de DTOs
         return ResponseEntity.ok(orderDtos);
     }
 }

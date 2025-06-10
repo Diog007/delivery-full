@@ -31,18 +31,12 @@ public class AdminController {
     private final OrderService orderService;
     private final MenuService menuService;
 
-    // --- MÉTODO CORRIGIDO ---
     @GetMapping("/orders")
     public ResponseEntity<List<ResponseDtos.OrderResponseDto>> getAllOrders() {
-        // 1. Busca as entidades Order do serviço
         List<Order> orders = orderService.getAllOrders();
-
-        // 2. Mapeia a lista de entidades para uma lista de DTOs usando o OrderMapper
         List<ResponseDtos.OrderResponseDto> orderDtos = orders.stream()
                 .map(OrderMapper::toDto)
                 .collect(Collectors.toList());
-
-        // 3. Retorna a lista de DTOs, que é segura para ser serializada para JSON
         return ResponseEntity.ok(orderDtos);
     }
 

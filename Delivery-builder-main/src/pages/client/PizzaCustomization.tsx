@@ -1,5 +1,3 @@
-// src/pages/client/PizzaCustomization.tsx
-
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -11,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Plus, Minus } from "lucide-react";
 import { PizzaType, PizzaFlavor, PizzaExtra } from "@/types";
-import apiService from "@/services/apiService";
+import { api } from "@/services/apiService";
 import { useCart } from "@/contexts/CartContext";
 
 export const PizzaCustomization = () => {
@@ -36,10 +34,9 @@ export const PizzaCustomization = () => {
 
     const fetchData = async () => {
       try {
-        const allFlavors = await apiService.getPizzaFlavors();
-        const extrasData = await apiService.getPizzaExtras();
+        const allFlavors = await api.public.getPizzaFlavors();
+        const extrasData = await api.public.getPizzaExtras();
         
-        // Garante que a resposta da API é um array antes de filtrar
         const flavorsForType = Array.isArray(allFlavors) 
           ? allFlavors.filter(flavor => flavor.pizzaType?.id === pizzaType.id) 
           : [];

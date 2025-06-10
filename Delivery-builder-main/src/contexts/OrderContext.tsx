@@ -5,7 +5,7 @@ import {
   ReactNode,
   useCallback,
   useMemo,
-  useEffect, // Adicionando useEffect para o carregamento inicial
+  useEffect,
 } from "react";
 import { Order, OrderStatus } from "@/types";
 import { OrderDtos } from "@/dto";
@@ -35,27 +35,36 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const refreshOrders = useCallback(async () => {
+    // --- CORREÇÃO APLICADA AQUI ---
+    // Só busca todos os pedidos se houver um token de admin.
+    if (!localStorage.getItem("authToken")) {
+        setOrders([]);
+        return;
+    }
     setIsLoading(true);
     try {
       const allOrders = await api.admin.getAllOrders();
       setOrders(Array.isArray(allOrders) ? allOrders : []);
     } catch (error) {
+      console.error("Failed to refresh orders for admin:", error);
       setOrders([]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Carrega os pedidos quando o provedor é montado pela primeira vez
   useEffect(() => {
-    refreshOrders();
+    // Apenas executa o refresh se for um admin
+    if (localStorage.getItem("authToken")) {
+        refreshOrders();
+    }
   }, [refreshOrders]);
 
   const createOrder = useCallback(async (orderData: OrderDtos.CreateOrderDto) => {
     setIsLoading(true);
     try {
       const newOrder = await api.customer.createOrder(orderData);
-      refreshOrders();
+      // Não chama mais refreshOrders aqui para não tentar buscar como admin
       return newOrder;
     } catch (error) {
       console.error("Falha ao criar pedido:", error);
@@ -63,7 +72,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshOrders]);
+  }, []);
 
   const getOrderById = useCallback(async (id: string) => {
     setIsLoading(true);

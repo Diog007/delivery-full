@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Order } from "@/types";
-import apiService from "@/services/apiService";
+import { api } from "@/services/apiService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 
@@ -12,7 +12,7 @@ export const MyOrders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const data = await apiService.getCustomerOrders();
+                const data = await api.customer.getCustomerOrders();
                 setOrders(data);
             } catch (error) {
                 console.error("Failed to fetch orders:", error);

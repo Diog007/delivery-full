@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Pizza, Package, Star } from "lucide-react";
 import { PizzaType, PizzaFlavor, PizzaExtra } from "@/types";
-import apiService from "@/services/apiService";
+import { api } from "@/services/apiService";
 
 // Helper para formatar preço
 const formatPrice = (price: number) => {
@@ -35,9 +35,9 @@ const TypeDialog = ({ open, setOpen, editingItem, onSave }) => {
     setIsLoading(true);
     try {
       if (editingItem) {
-        await apiService.updatePizzaType(editingItem.id, formData);
+        await api.admin.updatePizzaType(editingItem.id, formData);
       } else {
-        await apiService.createPizzaType(formData);
+        await api.admin.createPizzaType(formData);
       }
       onSave();
     } catch (error) {
@@ -84,9 +84,11 @@ const FlavorDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
     };
     try {
       if (editingItem) {
-        await apiService.updatePizzaFlavor(editingItem.id, payload);
+        // --- CORREÇÃO APLICADA AQUI ---
+        await api.admin.updatePizzaFlavor(editingItem.id, payload as any);
       } else {
-        await apiService.createPizzaFlavor(payload);
+        // --- CORREÇÃO APLICADA AQUI ---
+        await api.admin.createPizzaFlavor(payload as any);
       }
       onSave();
     } catch (error) {
@@ -131,9 +133,9 @@ const ExtraDialog = ({ open, setOpen, editingItem, onSave }) => {
     setIsLoading(true);
     try {
       if (editingItem) {
-        await apiService.updatePizzaExtra(editingItem.id, formData);
+        await api.admin.updatePizzaExtra(editingItem.id, formData);
       } else {
-        await apiService.createPizzaExtra(formData);
+        await api.admin.createPizzaExtra(formData);
       }
       onSave();
     } catch (error) {
@@ -175,9 +177,9 @@ export const MenuManagement = () => {
   const loadData = useCallback(async () => {
     try {
       const [types, flavors, extras] = await Promise.all([
-        apiService.getPizzaTypes(),
-        apiService.getPizzaFlavors(),
-        apiService.getPizzaExtras(),
+        api.public.getPizzaTypes(),
+        api.public.getPizzaFlavors(),
+        api.public.getPizzaExtras(),
       ]);
       setPizzaTypes(Array.isArray(types) ? types : []);
       setPizzaFlavors(Array.isArray(flavors) ? flavors : []);
@@ -200,7 +202,7 @@ export const MenuManagement = () => {
       edit: (item) => { setEditingType(item); setIsTypeDialogOpen(true); },
       delete: async (id) => {
         if (window.confirm("Tem certeza?")) {
-          try { await apiService.deletePizzaType(id); loadData(); } 
+          try { await api.admin.deletePizzaType(id); loadData(); } 
           catch (error) { alert("Falha ao excluir. Verifique se não há sabores associados."); }
         }
       },
@@ -210,7 +212,7 @@ export const MenuManagement = () => {
       edit: (item) => { setEditingFlavor(item); setIsFlavorDialogOpen(true); },
       delete: async (id) => {
         if (window.confirm("Tem certeza?")) {
-          try { await apiService.deletePizzaFlavor(id); loadData(); } 
+          try { await api.admin.deletePizzaFlavor(id); loadData(); } 
           catch (error) { alert("Falha ao excluir."); }
         }
       },
@@ -220,7 +222,7 @@ export const MenuManagement = () => {
       edit: (item) => { setEditingExtra(item); setIsExtraDialogOpen(true); },
       delete: async (id) => {
         if (window.confirm("Tem certeza?")) {
-          try { await apiService.deletePizzaExtra(id); loadData(); }
+          try { await api.admin.deletePizzaExtra(id); loadData(); }
           catch (error) { alert("Falha ao excluir."); }
         }
       },

@@ -31,11 +31,12 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderDtos.CreateOrderDto orderDto, String userEmail) {
-        // --- CORREÇÃO ---: Busca o cliente pelo email (extraído do token)
+        // --- A CORREÇÃO SOLICITADA JÁ ESTÁ APLICADA AQUI ---
+        // Busca o cliente pelo email (extraído do token), garantindo a associação correta.
         CustomerUser customer = customerUserRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Cliente com email " + userEmail + " não encontrado."));
 
-        // --- CORREÇÃO ---: Mapeia os DTOs de item para entidades, buscando os dados do banco a partir dos IDs.
+        // Mapeia os DTOs de item para entidades, buscando os dados do banco a partir dos IDs.
         // Isso impede a manipulação de preços pelo frontend.
         List<OrderItem> orderItems = orderDto.items().stream().map(itemDto -> {
             PizzaType pizzaType = pizzaTypeRepository.findById(itemDto.pizzaTypeId())

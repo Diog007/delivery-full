@@ -27,15 +27,11 @@ public class CustomerAuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomerUserRepository customerUserRepository;
 
-    // --- MÉTODO CORRIGIDO ---
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@Valid @RequestBody CustomerDtos.RegisterRequest req) {
         customerService.register(req);
-
-        // Cria um objeto JSON para a resposta
         Map<String, String> response = new HashMap<>();
         response.put("message", "Usuário registrado com sucesso!");
-
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 

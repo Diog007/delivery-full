@@ -56,15 +56,19 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
   ];
 
   useEffect(() => {
+    if (!order || !order.createdAt) return;
     const interval = setInterval(() => {
+      // --- CORREÇÃO APLICADA AQUI ---
+      // Converte a string de data da API para um objeto Date
+      const createdAtDate = new Date(order.createdAt);
       const elapsed = Math.floor(
-        (Date.now() - order.createdAt.getTime()) / 1000 / 60,
+        (Date.now() - createdAtDate.getTime()) / 1000 / 60,
       );
       setTimeElapsed(elapsed);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [order.createdAt]);
+  }, [order]);
 
   const getCurrentStepIndex = () => {
     return statusSteps.findIndex((step) => step.status === order.status);
@@ -80,6 +84,7 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
     if (!order.estimatedDeliveryTime) return null;
 
     const now = new Date();
+    // --- CORREÇÃO APLICADA AQUI ---
     const estimated = new Date(order.estimatedDeliveryTime);
     const diffMs = estimated.getTime() - now.getTime();
     const diffMins = Math.ceil(diffMs / 1000 / 60);

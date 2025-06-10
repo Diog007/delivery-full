@@ -158,7 +158,6 @@ export const AdminDashboard = () => {
                     <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1"><span className="font-medium">Pedido #{order.id}</span><OrderStatusBadge status={order.status} /></div>
-                        {/* --- CORREÇÃO APLICADA --- */}
                         <p className="text-sm text-gray-600">{order.customerUser?.name} - {getTimeAgo(new Date(order.createdAt))}</p>
                         <p className="text-sm font-medium">{formatPrice(order.totalAmount)}</p>
                       </div>
@@ -189,7 +188,6 @@ export const AdminDashboard = () => {
                     <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1"><span className="font-medium">Pedido #{order.id}</span><OrderStatusBadge status={order.status} /></div>
-                         {/* --- CORREÇÃO APLICADA --- */}
                         <p className="text-sm text-gray-600">{order.customerUser?.name}</p>
                         <p className="text-xs text-gray-500">{formatDateTime(new Date(order.createdAt))}</p>
                       </div>
