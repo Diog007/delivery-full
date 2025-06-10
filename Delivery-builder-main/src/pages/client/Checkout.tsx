@@ -8,67 +8,76 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, CreditCard, Banknote, Truck, Store, UserCheck } from "lucide-react";
+import { ArrowLeft, UserCheck } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { useOrders } from "@/contexts/OrderContext";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { LoginModal } from "@/components/LoginModal";
-import { DeliveryAddress, Payment } from "@/types";
+import { DeliveryAddress, DeliveryType, Payment, PaymentMethod } from "@/types";
 import { OrderDtos } from "@/dto";
+import { api } from "@/services/apiService";
 
-type CartItemRequestDto = OrderDtos.CartItemRequestDto;
 type CreateOrderDto = OrderDtos.CreateOrderDto;
 
 export const Checkout = () => {
     const navigate = useNavigate();
     const { items, getTotalPrice, clearCart } = useCart();
-    const { createOrder, isLoading } = useOrders();
     const { isAuthenticated, customerName } = useCustomerAuth();
 
+    const [isLoading, setIsLoading] = useState(false);
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-    const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup">("delivery");
-
+    
+    // Estados do Formulário
+    const [deliveryType, setDeliveryType] = useState<DeliveryType>("DELIVERY");
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CARD");
     const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress>({ street: "", number: "", complement: "", neighborhood: "", city: "", zipCode: "" });
-    const [payment, setPayment] = useState<Payment>({ method: "cash" });
     const [observations, setObservations] = useState("");
 
+    // --- NOVO: Estados para os detalhes do cartão ---
+    const [cardType, setCardType] = useState<"credit" | "debit">("credit");
+    const [cardBrand, setCardBrand] = useState<string>("visa");
+    
+    // Estado unificado para o pagamento
+    const [payment, setPayment] = useState<Payment>({ method: "CARD", cardType: "credit", cardBrand: "visa"});
+
+    // --- NOVO: Efeito para manter o objeto de pagamento sincronizado ---
     useEffect(() => {
+        if (paymentMethod === 'CARD') {
+            setPayment({ method: 'CARD', cardType, cardBrand });
+        } else {
+            setPayment({ method: 'CASH', cardType: undefined, cardBrand: undefined });
+        }
+    }, [paymentMethod, cardType, cardBrand]);
+
+
+    useEffect(() => {
+        if (!isAuthenticated && items.length > 0) {
+            setLoginModalOpen(true);
+        }
         if (items.length === 0) {
             navigate("/cart");
         }
-    }, [items, navigate]);
-
-    // Abre o modal de login se o usuário não estiver autenticado e tentar acessar o checkout
-    useEffect(() => {
-        if (!isAuthenticated) {
-            setLoginModalOpen(true);
-        }
-    }, [isAuthenticated]);
+    }, [items, isAuthenticated, navigate]);
 
     const totalPrice = getTotalPrice();
-    const deliveryFee = deliveryType === 'delivery' && totalPrice < 40 ? 5 : 0;
+    const deliveryFee = deliveryType === 'DELIVERY' && totalPrice < 40 ? 5 : 0;
     const finalTotal = totalPrice + deliveryFee;
 
     const formatPrice = (price: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setDeliveryAddress(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handlePaymentChange = (value: "cash" | "card") => {
-        setPayment(prev => ({ ...prev, method: value, cardBrand: undefined, cardType: undefined }));
+    const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setDeliveryAddress(prev => ({ ...prev, [id]: value }));
     };
 
     const handleSubmitOrder = async () => {
         if (!isAuthenticated) {
-            alert("Você precisa estar logado para finalizar o pedido.");
             setLoginModalOpen(true);
             return;
         }
 
+        setIsLoading(true);
         try {
-            const itemsForApi: CartItemRequestDto[] = items.map(item => ({
+            const itemsForApi: OrderDtos.CartItemRequestDto[] = items.map(item => ({
                 pizzaTypeId: item.pizzaType.id,
                 flavorId: item.flavor.id,
                 extraIds: item.extras.map(extra => extra.id),
@@ -80,133 +89,149 @@ export const Checkout = () => {
             const orderData: CreateOrderDto = {
                 items: itemsForApi,
                 deliveryType,
-                deliveryAddress: deliveryType === "delivery" ? deliveryAddress : undefined,
-                payment,
-                status: "received",
-                createdAt: new Date(),
-                estimatedDeliveryTime: new Date(Date.now() + (deliveryType === "delivery" ? 45 : 30) * 60 * 1000),
+                deliveryAddress: deliveryType === "DELIVERY" ? deliveryAddress : undefined,
+                payment: payment, // Usa o objeto de pagamento unificado
+                status: "RECEIVED",
                 totalAmount: finalTotal,
                 observations,
+                createdAt: new Date(),
+                estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000), // 45 min
             };
 
-            const order = await createOrder(orderData);
-
-            if (order) {
+            const createdOrder = await api.customer.createOrder(orderData);
+            if (createdOrder) {
                 clearCart();
-                navigate(`/tracking/${order.id}`);
-            } else {
-                throw new Error("O pedido não foi criado com sucesso.");
+                navigate(`/tracking/${createdOrder.id}`);
             }
         } catch (error) {
-            console.error("Erro ao criar pedido:", error);
-            alert("Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.");
+            alert(`Erro ao finalizar o pedido: ${error.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <Layout>
             <LoginModal open={isLoginModalOpen} setOpen={setLoginModalOpen} />
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex items-center mb-8">
-                        <Button variant="ghost" onClick={() => navigate("/cart")} className="mr-4">
-                            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar ao Carrinho
-                        </Button>
-                        <h1 className="text-3xl font-bold">Finalizar Pedido</h1>
-                    </div>
+            <div className="container mx-auto px-4 py-8 max-w-4xl">
+                <div className="flex items-center mb-8">
+                    <Button variant="ghost" onClick={() => navigate("/cart")} className="mr-4"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Button>
+                    <h1 className="text-3xl font-bold">Finalizar Pedido</h1>
+                </div>
 
-                    <div className="grid lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-6">
-                            {!isAuthenticated ? (
+                <div className="grid lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-6">
+                        {isAuthenticated ? (
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center"><UserCheck className="h-5 w-5 mr-2 text-green-600" /> Olá, {customerName}!</CardTitle>
+                                    <p className="text-sm text-gray-600">Confira os detalhes abaixo para finalizar seu pedido.</p>
+                                </CardHeader>
+                            </Card>
+                        ) : (
+                            <Card>
+                               <CardHeader>
+                                    <CardTitle className="flex items-center"><UserCheck className="h-5 w-5 mr-2 text-red-600" /> Identificação</CardTitle>
+                                    <p className="text-sm text-gray-600">Para continuar, por favor, entre ou crie sua conta.</p>
+                                </CardHeader>
+                                <CardContent>
+                                    <Button onClick={() => setLoginModalOpen(true)} className="w-full bg-red-600 hover:bg-red-700">
+                                        Entrar ou Criar Conta
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        )}
+                       
+                        {isAuthenticated && (
+                            <>
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center"><UserCheck className="h-5 w-5 mr-2 text-red-600" /> Identificação</CardTitle>
-                                        <p className="text-sm text-gray-600">Para continuar, por favor, entre ou crie sua conta.</p>
-                                    </CardHeader>
+                                    <CardHeader><CardTitle>1. Opção de Entrega</CardTitle></CardHeader>
                                     <CardContent>
-                                        <Button onClick={() => setLoginModalOpen(true)} className="w-full bg-red-600 hover:bg-red-700">
-                                            Entrar ou Criar Conta
-                                        </Button>
+                                        <RadioGroup value={deliveryType} onValueChange={(v: DeliveryType) => setDeliveryType(v)}>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="DELIVERY" id="delivery" /><Label htmlFor="delivery">Entrega em domicílio</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="PICKUP" id="pickup" /><Label htmlFor="pickup">Retirar no local</Label></div>
+                                        </RadioGroup>
                                     </CardContent>
                                 </Card>
-                            ) : (
-                                <>
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Olá, {customerName}!</CardTitle>
-                                            <p className="text-sm text-gray-600">Seu pedido será associado à sua conta.</p>
-                                        </CardHeader>
-                                    </Card>
 
+                                {deliveryType === "DELIVERY" && (
                                     <Card>
-                                        <CardHeader><CardTitle>1. Opção de Entrega</CardTitle></CardHeader>
-                                        <CardContent>
-                                            <RadioGroup defaultValue="delivery" value={deliveryType} onValueChange={(value: "delivery" | "pickup") => setDeliveryType(value)}>
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="delivery" id="delivery" /><Label htmlFor="delivery" className="flex items-center gap-2"><Truck className="h-5 w-5"/>Receber em casa</Label></div>
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="pickup" id="pickup" /><Label htmlFor="pickup" className="flex items-center gap-2"><Store className="h-5 w-5"/>Retirar no local</Label></div>
-                                            </RadioGroup>
+                                        <CardHeader><CardTitle>2. Endereço de Entrega</CardTitle></CardHeader>
+                                        <CardContent className="space-y-4">
+                                             <div className="grid grid-cols-2 gap-4">
+                                                <div><Label htmlFor="street">Rua</Label><Input id="street" value={deliveryAddress.street} onChange={handleAddressChange} required/></div>
+                                                <div><Label htmlFor="number">Número</Label><Input id="number" value={deliveryAddress.number} onChange={handleAddressChange} required/></div>
+                                            </div>
+                                            <div><Label htmlFor="neighborhood">Bairro</Label><Input id="neighborhood" value={deliveryAddress.neighborhood} onChange={handleAddressChange} required/></div>
+                                            <div><Label htmlFor="city">Cidade</Label><Input id="city" value={deliveryAddress.city} onChange={handleAddressChange} required/></div>
+                                            <div><Label htmlFor="zipCode">CEP</Label><Input id="zipCode" value={deliveryAddress.zipCode} onChange={handleAddressChange} required/></div>
+                                            <div><Label htmlFor="complement">Complemento</Label><Input id="complement" value={deliveryAddress.complement || ''} onChange={handleAddressChange}/></div>
                                         </CardContent>
                                     </Card>
+                                )}
 
-                                    {deliveryType === "delivery" && (
-                                        <Card>
-                                            <CardHeader><CardTitle>2. Endereço de Entrega</CardTitle></CardHeader>
-                                            <CardContent className="space-y-4">
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    <div className="col-span-2"><Label htmlFor="street">Rua</Label><Input id="street" name="street" value={deliveryAddress.street} onChange={handleInputChange} /></div>
-                                                    <div><Label htmlFor="number">Número</Label><Input id="number" name="number" value={deliveryAddress.number} onChange={handleInputChange} /></div>
+                                <Card>
+                                    <CardHeader><CardTitle>3. Pagamento</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <RadioGroup value={paymentMethod} onValueChange={(v: PaymentMethod) => setPaymentMethod(v)}>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="CARD" id="card" /><Label htmlFor="card">Cartão de Crédito/Débito</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="CASH" id="cash" /><Label htmlFor="cash">Dinheiro</Label></div>
+                                        </RadioGroup>
+
+                                        {/* --- NOVO: Bloco condicional para detalhes do cartão --- */}
+                                        {paymentMethod === 'CARD' && (
+                                            <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                                                <div>
+                                                    <Label>Tipo do Cartão</Label>
+                                                    <Select value={cardType} onValueChange={(v: 'credit' | 'debit') => setCardType(v)}>
+                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="credit">Crédito</SelectItem>
+                                                            <SelectItem value="debit">Débito</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                 </div>
-                                                <div><Label htmlFor="complement">Complemento (Opcional)</Label><Input id="complement" name="complement" value={deliveryAddress.complement} onChange={handleInputChange} /></div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div><Label htmlFor="neighborhood">Bairro</Label><Input id="neighborhood" name="neighborhood" value={deliveryAddress.neighborhood} onChange={handleInputChange} /></div>
-                                                    <div><Label htmlFor="zipCode">CEP</Label><Input id="zipCode" name="zipCode" value={deliveryAddress.zipCode} onChange={handleInputChange} /></div>
+                                                <div>
+                                                    <Label>Bandeira</Label>
+                                                    <Select value={cardBrand} onValueChange={setCardBrand}>
+                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="visa">Visa</SelectItem>
+                                                            <SelectItem value="mastercard">Mastercard</SelectItem>
+                                                            <SelectItem value="elo">Elo</SelectItem>
+                                                            <SelectItem value="amex">Amex</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                 </div>
-                                                <div><Label htmlFor="city">Cidade</Label><Input id="city" name="city" value={deliveryAddress.city} onChange={handleInputChange} /></div>
-                                            </CardContent>
-                                        </Card>
-                                    )}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
 
-                                    <Card>
-                                        <CardHeader><CardTitle>3. Pagamento</CardTitle></CardHeader>
-                                        <CardContent>
-                                            <RadioGroup defaultValue="cash" value={payment.method} onValueChange={handlePaymentChange}>
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="cash" id="cash" /><Label htmlFor="cash" className="flex items-center gap-2"><Banknote className="h-5 w-5"/>Dinheiro</Label></div>
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="card" id="card" /><Label htmlFor="card" className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Cartão na entrega</Label></div>
-                                            </RadioGroup>
-                                            {payment.method === 'card' && (
-                                                <div className="grid grid-cols-2 gap-4 mt-4">
-                                                   <Select onValueChange={val => setPayment(p => ({ ...p, cardBrand: val as any }))}><SelectTrigger><SelectValue placeholder="Bandeira" /></SelectTrigger><SelectContent><SelectItem value="visa">Visa</SelectItem><SelectItem value="mastercard">Mastercard</SelectItem><SelectItem value="elo">Elo</SelectItem></SelectContent></Select>
-                                                   <Select onValueChange={val => setPayment(p => ({ ...p, cardType: val as any }))}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="credit">Crédito</SelectItem><SelectItem value="debit">Débito</SelectItem></SelectContent></Select>
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
+                                <Card>
+                                    <CardHeader><CardTitle>4. Observações</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <Textarea placeholder="Ex: sem cebola, ponto da carne, etc." value={observations} onChange={(e) => setObservations(e.target.value)} />
+                                    </CardContent>
+                                </Card>
+                            </>
+                        )}
+                    </div>
 
-                                    <Card>
-                                        <CardHeader><CardTitle>4. Observações (Opcional)</CardTitle></CardHeader>
-                                        <CardContent>
-                                            <Textarea placeholder="Ex: sem cebola, ponto da carne, etc." value={observations} onChange={e => setObservations(e.target.value)} />
-                                        </CardContent>
-                                    </Card>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="lg:col-span-1">
-                            <Card className="sticky top-8">
-                                <CardHeader><CardTitle>Resumo do Pedido</CardTitle></CardHeader>
-                                <CardContent className="space-y-2">
-                                    <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(totalPrice)}</span></div>
-                                    <div className="flex justify-between"><span>Taxa de entrega</span><span>{deliveryFee > 0 ? formatPrice(deliveryFee) : 'Grátis'}</span></div>
-                                    <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>Total</span><span>{formatPrice(finalTotal)}</span></div>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button onClick={handleSubmitOrder} className="w-full bg-red-600 hover:bg-red-700" disabled={!isAuthenticated || isLoading}>
-                                        {isLoading ? "Processando..." : "Finalizar Pedido"}
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        </div>
+                    <div className="lg:col-span-1">
+                        <Card className="sticky top-8">
+                            <CardHeader><CardTitle>Resumo do Pedido</CardTitle></CardHeader>
+                            <CardContent className="space-y-2">
+                                <div className="flex justify-between"><span>Subtotal:</span><span>{formatPrice(totalPrice)}</span></div>
+                                <div className="flex justify-between"><span>Taxa de Entrega:</span><span>{deliveryFee > 0 ? formatPrice(deliveryFee) : 'Grátis'}</span></div>
+                                <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total:</span><span>{formatPrice(finalTotal)}</span></div>
+                            </CardContent>
+                            <CardFooter>
+                                <Button onClick={handleSubmitOrder} className="w-full bg-red-600 hover:bg-red-700" disabled={!isAuthenticated || isLoading}>
+                                    {isLoading ? "Processando..." : "Finalizar Pedido"}
+                                </Button>
+                            </CardFooter>
+                        </Card>
                     </div>
                 </div>
             </div>

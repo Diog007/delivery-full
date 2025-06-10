@@ -3,9 +3,23 @@ import { AuthDtos, OrderDtos } from "@/dto";
 
 const API_BASE_URL = 'http://localhost:8090/api';
 
-async function baseRequest<T>(endpoint: string, options: RequestInit = {}, token: string | null): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const headers: HeadersInit = { 'Content-Type': 'application/json', ...options.headers };
+async function baseRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  let url = `${API_BASE_URL}${endpoint}`;
+  
+  // --- CORREÇÃO APLICADA AQUI (Cache Busting) ---
+  // Se for uma requisição GET, adicionamos um parâmetro de timestamp à URL.
+  // Isso torna cada requisição única para o navegador, forçando-o a buscar
+  // os dados mais recentes do servidor em vez de usar o cache.
+  if (!options.method || options.method.toUpperCase() === 'GET') {
+    url += `?_=${new Date().getTime()}`;
+  }
+
+  const token = localStorage.getItem("customerAuthToken") || localStorage.getItem("authToken");
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -22,87 +36,47 @@ async function baseRequest<T>(endpoint: string, options: RequestInit = {}, token
     const text = await response.text();
     return text ? JSON.parse(text) : null;
   } catch (error) {
-    console.error('API Service Error:', error);
+    console.error('Erro no serviço da API:', error);
     throw error;
   }
 }
 
+// --- API Pública ---
 const publicApi = {
-  getPizzaTypes: () => baseRequest<PizzaType[]>('/menu/types', {}, null),
-  getPizzaFlavors: () => baseRequest<PizzaFlavor[]>('/menu/flavors', {}, null),
-  getPizzaExtras: () => baseRequest<PizzaExtra[]>('/menu/extras', {}, null),
-  getOrderById: (id: string) => baseRequest<Order>(`/orders/${id}`, {}, null),
+  getPizzaTypes: () => baseRequest<PizzaType[]>('/menu/types'),
+  getPizzaFlavors: () => baseRequest<PizzaFlavor[]>('/menu/flavors'),
+  getPizzaExtras: () => baseRequest<PizzaExtra[]>('/menu/extras'),
+  getOrderById: (id: string) => baseRequest<Order>(`/orders/${id}`),
 };
 
+// --- API do Cliente ---
 const customerApi = {
-  login: (email, password) => baseRequest<AuthDtos.LoginResponse>('/customer/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }, null),
-  register: (data) => baseRequest<{ message: string }>('/customer/auth/register', { method: 'POST', body: JSON.stringify(data) }, null),
-  
-  createOrder: (orderData: OrderDtos.CreateOrderDto) => {
-    const token = localStorage.getItem("customerAuthToken");
-    return baseRequest<Order>('/orders', { method: 'POST', body: JSON.stringify(orderData) }, token);
-  },
-  
-  getCustomerOrders: () => {
-    const token = localStorage.getItem("customerAuthToken");
-    return baseRequest<Order[]>('/customer/orders', {}, token);
-  },
+  login: (data) => baseRequest<AuthDtos.LoginResponse>('/customer/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  register: (data) => baseRequest<{ message: string }>('/customer/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  createOrder: (orderData: OrderDtos.CreateOrderDto) => baseRequest<Order>('/orders', { method: 'POST', body: JSON.stringify(orderData) }),
+  getCustomerOrders: () => baseRequest<Order[]>('/customer/orders'),
 };
 
+// --- API do Admin ---
 const adminApi = {
-  login: (username, password) => baseRequest<AuthDtos.LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }, null),
-
-  getDashboardStats: () => {
-    const token = localStorage.getItem("authToken");
-    return baseRequest<DashboardStats>('/admin/dashboard/stats', {}, token);
-  },
+  // --- CORREÇÃO APLICADA AQUI ---
+  // A função de login agora espera um único objeto `data` contendo username e password.
+  login: (data: AuthDtos.AdminLoginRequest) => baseRequest<AuthDtos.LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   
-  getAllOrders: () => {
-    const token = localStorage.getItem("authToken");
-    return baseRequest<Order[]>('/admin/orders', {}, token);
-  },
+  getDashboardStats: () => baseRequest<DashboardStats>('/admin/dashboard/stats'),
+  getAllOrders: () => baseRequest<Order[]>('/admin/orders'),
+  updateOrderStatus: (id: string, status: OrderStatus) => baseRequest<Order>(`/admin/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   
-  updateOrderStatus: (id: string, status: OrderStatus) => {
-    const token = localStorage.getItem("authToken");
-    return baseRequest<Order>(`/admin/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }, token);
-  },
-  
-  createPizzaType: (data: Partial<PizzaType>) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<PizzaType>('/admin/types', { method: 'POST', body: JSON.stringify(data) }, token);
-  },
-  updatePizzaType: (id: string, data: Partial<PizzaType>) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<PizzaType>(`/admin/types/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token);
-  },
-  deletePizzaType: (id: string) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<void>(`/admin/types/${id}`, { method: 'DELETE' }, token);
-  },
-  createPizzaFlavor: (data: Partial<PizzaFlavor>) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<PizzaFlavor>('/admin/flavors', { method: 'POST', body: JSON.stringify(data) }, token);
-  },
-  updatePizzaFlavor: (id: string, data: Partial<PizzaFlavor>) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<PizzaFlavor>(`/admin/flavors/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token);
-  },
-  deletePizzaFlavor: (id: string) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<void>(`/admin/flavors/${id}`, { method: 'DELETE' }, token);
-  },
-  createPizzaExtra: (data: Partial<PizzaExtra>) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<PizzaExtra>('/admin/extras', { method: 'POST', body: JSON.stringify(data) }, token);
-  },
-  updatePizzaExtra: (id: string, data: Partial<PizzaExtra>) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<PizzaExtra>(`/admin/extras/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token);
-  },
-  deletePizzaExtra: (id: string) => {
-      const token = localStorage.getItem("authToken");
-      return baseRequest<void>(`/admin/extras/${id}`, { method: 'DELETE' }, token);
-  },
+  // ... (o restante das funções de gerenciamento de menu permanece igual)
+  createPizzaType: (data: Partial<PizzaType>) => baseRequest<PizzaType>('/admin/types', { method: 'POST', body: JSON.stringify(data) }),
+  updatePizzaType: (id: string, data: Partial<PizzaType>) => baseRequest<PizzaType>(`/admin/types/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePizzaType: (id: string) => baseRequest<void>(`/admin/types/${id}`, { method: 'DELETE' }),
+  createPizzaFlavor: (data: Partial<PizzaFlavor>) => baseRequest<PizzaFlavor>('/admin/flavors', { method: 'POST', body: JSON.stringify(data) }),
+  updatePizzaFlavor: (id: string, data: Partial<PizzaFlavor>) => baseRequest<PizzaFlavor>(`/admin/flavors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePizzaFlavor: (id: string) => baseRequest<void>(`/admin/flavors/${id}`, { method: 'DELETE' }),
+  createPizzaExtra: (data: Partial<PizzaExtra>) => baseRequest<PizzaExtra>('/admin/extras', { method: 'POST', body: JSON.stringify(data) }),
+  updatePizzaExtra: (id: string, data: Partial<PizzaExtra>) => baseRequest<PizzaExtra>(`/admin/extras/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePizzaExtra: (id: string) => baseRequest<void>(`/admin/extras/${id}`, { method: 'DELETE' }),
 };
 
 export const api = {

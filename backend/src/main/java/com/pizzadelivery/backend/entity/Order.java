@@ -1,5 +1,7 @@
 package com.pizzadelivery.backend.entity;
 
+import com.pizzadelivery.backend.enums.DeliveryType;
+import com.pizzadelivery.backend.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,14 +22,15 @@ public class Order {
     private String id;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "order_id") // Garante a chave estrangeira na tabela OrderItem
     private List<OrderItem> items;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_user_id")
     private CustomerUser customerUser;
 
-    // --- ADICIONE A LINHA ABAIXO ---
-    private String deliveryType;
+    @Enumerated(EnumType.STRING) // REFACTOR: Usa Enum para segurança de tipo
+    private DeliveryType deliveryType;
 
     @Embedded
     private DeliveryAddress deliveryAddress;
@@ -35,7 +38,9 @@ public class Order {
     @Embedded
     private Payment payment;
 
-    private String status;
+    @Enumerated(EnumType.STRING) // REFACTOR: Usa Enum para segurança de tipo
+    private OrderStatus status;
+
     private LocalDateTime createdAt;
     private LocalDateTime estimatedDeliveryTime;
     private double totalAmount;

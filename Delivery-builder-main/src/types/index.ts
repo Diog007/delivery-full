@@ -1,4 +1,14 @@
-// Caminho: src/types/index.ts
+// REFACTOR: Tipos alinhados com os Enums e DTOs do backend refatorado.
+
+export type OrderStatus =
+  | "RECEIVED"
+  | "PREPARING"
+  | "OUT_FOR_DELIVERY"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export type DeliveryType = "DELIVERY" | "PICKUP";
+export type PaymentMethod = "CASH" | "CARD";
 
 export interface PizzaType {
   id: string;
@@ -11,7 +21,7 @@ export interface PizzaFlavor {
   id: string;
   name: string;
   description: string;
-  pizzaType: PizzaType; // Correto, espera o objeto completo
+  pizzaType: PizzaType;
   price: number;
 }
 
@@ -23,7 +33,7 @@ export interface PizzaExtra {
 }
 
 export interface CartItem {
-  id: string;
+  id: string; // ID gerado no frontend para o item do carrinho
   pizzaType: PizzaType;
   flavor: PizzaFlavor;
   extras: PizzaExtra[];
@@ -32,17 +42,8 @@ export interface CartItem {
   totalPrice: number;
 }
 
-// Este tipo é para os dados do formulário
-export interface Customer {
-  name: string;
-  whatsapp: string;
-  cpf: string;
-  birthDate: string;
-  email: string;
-}
-
-// Este tipo é para o usuário logado que vem da API
-export interface CustomerUser {
+// Representação segura do usuário que vem na resposta da API.
+export interface CustomerUserDto {
   id: string;
   name: string;
   email: string;
@@ -58,28 +59,22 @@ export interface DeliveryAddress {
 }
 
 export interface Payment {
-  method: "cash" | "card";
-  cardBrand?: "visa" | "mastercard" | "elo" | "amex";
-  cardType?: "credit" | "debit";
+  method: PaymentMethod;
+  cardBrand?: string;
+  cardType?: string;
 }
 
-export type OrderStatus =
-  | "received"
-  | "preparing"
-  | "out_for_delivery"
-  | "completed"
-  | "cancelled";
-
+// A interface principal para um Pedido, espelhando o OrderResponseDto do backend.
 export interface Order {
   id: string;
-  items: CartItem[];
-  customerUser: CustomerUser; // Correto, espera a referência ao usuário logado
-  deliveryType: "delivery" | "pickup";
+  items: CartItem[]; // Frontend usa a interface CartItem que é compatível com OrderItemDto
+  customerUser: CustomerUserDto;
+  deliveryType: DeliveryType;
   deliveryAddress?: DeliveryAddress;
   payment: Payment;
   status: OrderStatus;
-  createdAt: Date;
-  estimatedDeliveryTime?: Date;
+  createdAt: string; // Usar string para datas da API é mais seguro para serialização
+  estimatedDeliveryTime?: string;
   totalAmount: number;
   observations?: string;
 }

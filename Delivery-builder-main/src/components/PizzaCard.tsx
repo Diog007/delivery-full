@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PizzaType } from "@/types";
+import { formatPrice } from "@/lib/utils"; // <-- PASSO 1: IMPORTAR A FUNÇÃO
 
 interface PizzaCardProps {
   pizzaType: PizzaType;
@@ -15,12 +16,7 @@ interface PizzaCardProps {
 }
 
 export const PizzaCard = ({ pizzaType, onSelect }: PizzaCardProps) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(price);
-  };
+  // PASSO 2: A definição local da função foi removida daqui.
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer group">
@@ -37,8 +33,6 @@ export const PizzaCard = ({ pizzaType, onSelect }: PizzaCardProps) => {
 
       <CardContent>
         <p className="text-gray-600 text-sm mb-4">{pizzaType.description}</p>
-
-        {/* Pizza illustration placeholder */}
         <div className="w-full h-32 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg flex items-center justify-center mb-4">
           <div className="text-4xl">🍕</div>
         </div>

@@ -2,39 +2,34 @@ package com.pizzadelivery.backend.dto;
 
 import com.pizzadelivery.backend.entity.DeliveryAddress;
 import com.pizzadelivery.backend.entity.Payment;
+import com.pizzadelivery.backend.enums.DeliveryType;
+import com.pizzadelivery.backend.enums.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class OrderDtos {
 
-    public record OrderStatusUpdate(String status) {}
+    // DTO para atualizar o status de um pedido. Usa o Enum.
+    public record OrderStatusUpdate(OrderStatus status) {}
 
-    /**
-     * --- DTO CORRIGIDO ---
-     * DTO para os itens do carrinho enviados na requisição.
-     * Contém apenas os IDs e informações relevantes, evitando que o cliente manipule preços.
-     */
+    // DTO para os itens do carrinho enviados na requisição.
     public record CartItemRequestDto(
             String pizzaTypeId,
             String flavorId,
             List<String> extraIds,
             String observations,
             int quantity,
-            double totalPrice // O preço total do item é calculado no front, mas validado no back se necessário
+            double totalPrice
     ) {}
 
-    /**
-     * --- DTO CORRIGIDO ---
-     * DTO para a requisição de criação de pedido. O campo 'customer' foi removido,
-     * pois o backend agora identifica o cliente pelo token de autenticação.
-     */
+    // DTO para a requisição de criação de pedido. Usa os Enums.
     public record CreateOrderDto(
             List<CartItemRequestDto> items,
-            String deliveryType,
+            DeliveryType deliveryType,
             DeliveryAddress deliveryAddress,
             Payment payment,
-            String status,
+            OrderStatus status,
             double totalAmount,
             String observations,
             LocalDateTime createdAt,

@@ -1,6 +1,9 @@
 package com.pizzadelivery.backend.dto;
 
 import com.pizzadelivery.backend.entity.*;
+import com.pizzadelivery.backend.enums.DeliveryType;
+import com.pizzadelivery.backend.enums.OrderStatus;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,15 +23,15 @@ public class ResponseDtos {
             double totalPrice
     ) {}
 
-    // A resposta completa do pedido que será enviada como JSON
+    // A resposta completa do pedido que será enviada como JSON. Usa os Enums.
     public record OrderResponseDto(
             String id,
             List<OrderItemDto> items,
             CustomerUserDto customerUser,
-            String deliveryType,
+            DeliveryType deliveryType,
             DeliveryAddress deliveryAddress,
             Payment payment,
-            String status,
+            OrderStatus status,
             LocalDateTime createdAt,
             LocalDateTime estimatedDeliveryTime,
             double totalAmount,

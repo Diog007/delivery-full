@@ -11,43 +11,20 @@ export const OrderStatusBadge = ({
   className,
 }: OrderStatusBadgeProps) => {
   const getStatusConfig = (status: OrderStatus) => {
+    // REFACTOR: O switch agora usa os valores do Enum em maiúsculas
     switch (status) {
-      case "received":
-        return {
-          label: "Pedido Recebido",
-          variant: "secondary" as const,
-          className: "bg-blue-100 text-blue-800",
-        };
-      case "preparing":
-        return {
-          label: "Em Preparo",
-          variant: "secondary" as const,
-          className: "bg-yellow-100 text-yellow-800",
-        };
-      case "out_for_delivery":
-        return {
-          label: "Saiu para Entrega",
-          variant: "secondary" as const,
-          className: "bg-purple-100 text-purple-800",
-        };
-      case "completed":
-        return {
-          label: "Finalizado",
-          variant: "secondary" as const,
-          className: "bg-green-100 text-green-800",
-        };
-      case "cancelled":
-        return {
-          label: "Cancelado",
-          variant: "destructive" as const,
-          className: "bg-red-100 text-red-800",
-        };
+      case "RECEIVED":
+        return { label: "Recebido", className: "bg-blue-100 text-blue-800" };
+      case "PREPARING":
+        return { label: "Em Preparo", className: "bg-yellow-100 text-yellow-800" };
+      case "OUT_FOR_DELIVERY":
+        return { label: "Saiu para Entrega", className: "bg-purple-100 text-purple-800" };
+      case "COMPLETED":
+        return { label: "Finalizado", className: "bg-green-100 text-green-800" };
+      case "CANCELLED":
+        return { label: "Cancelado", className: "bg-red-100 text-red-800" };
       default:
-        return {
-          label: "Status Desconhecido",
-          variant: "secondary" as const,
-          className: "bg-gray-100 text-gray-800",
-        };
+        return { label: "Desconhecido", className: "bg-gray-100 text-gray-800" };
     }
   };
 
@@ -55,7 +32,7 @@ export const OrderStatusBadge = ({
 
   return (
     <Badge
-      variant={config.variant}
+      variant="secondary"
       className={`${config.className} ${className}`}
     >
       {config.label}

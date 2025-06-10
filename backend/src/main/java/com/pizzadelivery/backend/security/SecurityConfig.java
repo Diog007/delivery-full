@@ -36,19 +36,23 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints Públicos
-                        .requestMatchers("/api/auth/**", "/api/customer/auth/**").permitAll()
+
+                        // --- CORREÇÃO APLICADA AQUI ---
+                        // Tornamos as regras para os endpoints de autenticação mais explícitas,
+                        // especificando o método POST e as rotas exatas que devem ser públicas.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/customer/auth/register", "/api/customer/auth/login").permitAll()
+
+                        // Mantemos as outras regras públicas para GET
                         .requestMatchers(HttpMethod.GET, "/api/menu/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/orders/**").permitAll() // Rastreamento público por ID
+                        .requestMatchers(HttpMethod.GET, "/api/orders/{id}").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
-                        // Endpoints de Admin
+                        // Endpoints de Admin (requerem token de admin)
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-                        // --- REGRA CORRIGIDA ---
-                        // Endpoints de Cliente (requerem autenticação de cliente)
+                        // Endpoints de Cliente (requerem token de cliente)
                         .requestMatchers("/api/customer/**").hasAuthority("ROLE_CUSTOMER")
-                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CUSTOMER") // Apenas clientes podem criar pedidos
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CUSTOMER")
 
                         // Qualquer outra requisição precisa de autenticação
                         .anyRequest().authenticated()
@@ -59,7 +63,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ... (O restante do arquivo permanece o mesmo)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -73,7 +76,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:8080"));
+        configuration.setAllowedOrigins(List.of("http://localhost:8080")); // URL do seu frontend
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);

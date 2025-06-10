@@ -2,7 +2,6 @@ import { createContext, useState, useContext, ReactNode, useCallback, useMemo, u
 import { api } from "@/services/apiService";
 import { AuthDtos } from "@/dto"; // Importa o namespace dos DTOs
 
-// --- Type Guard para a resposta do Login ---
 function isLoginResponse(data: any): data is AuthDtos.LoginResponse {
   return (
     data &&
@@ -20,6 +19,7 @@ interface CustomerAuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: any) => Promise<boolean>;
   logout: () => void;
+  isLoading: boolean; // Adicionado para feedback visual
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
@@ -32,6 +32,7 @@ export const useCustomerAuth = () => {
 
 export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   const [customerName, setCustomerName] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // Estado de loading
 
   useEffect(() => {
     const token = localStorage.getItem("customerAuthToken");
@@ -42,14 +43,9 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = useCallback(async (email, password) => {
+    setIsLoading(true);
     try {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("adminName");
-      
-      const response = await api.customer.login(email, password);
-
-      // --- CORREÇÃO APLICADA ---
-      // Usa o type guard para validar a resposta antes de usar .token e .name
+      const response = await api.customer.login({ email, password });
       if (isLoginResponse(response)) {
         localStorage.setItem("customerAuthToken", response.token);
         localStorage.setItem("customerName", response.name);
@@ -59,26 +55,35 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
       return false;
     } catch (error) {
       console.error("Falha no login do cliente:", error);
+      alert(`Falha no login: ${error.message}`); // Exibe a mensagem de erro da API
       return false;
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   const register = useCallback(async (data) => {
+    setIsLoading(true);
     try {
       await api.customer.register(data);
+      // Após o registro bem-sucedido, tenta fazer o login automaticamente
       return await login(data.email, data.password);
     } catch(error) {
       console.error("Falha no registro do cliente:", error);
-      alert("Falha no registro: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+      // REFACTOR: Exibe a mensagem de erro específica vinda do backend (ex: "E-mail já em uso")
+      alert(`Falha no registro: ${error.message}`);
       return false;
+    } finally {
+        setIsLoading(false);
     }
   }, [login]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("adminName");
     localStorage.removeItem("customerAuthToken");
     localStorage.removeItem("customerName");
+    // Limpa também o token de admin para evitar conflitos
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("adminName");
     setCustomerName(null);
   }, []);
 
@@ -88,7 +93,8 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
     login,
     register,
     logout,
-  }), [customerName, login, register, logout]);
+    isLoading,
+  }), [customerName, login, register, logout, isLoading]);
 
   return (
     <CustomerAuthContext.Provider value={value}>

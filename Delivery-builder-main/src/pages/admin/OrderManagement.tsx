@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import {
   Filter,
   Clock,
   MapPin,
-  Mail, // Trocado de Phone para Mail
+  Mail, // AJUSTE: Ícone de E-mail
   CreditCard,
   Banknote,
 } from "lucide-react";
@@ -48,6 +48,7 @@ export const OrderManagement = () => {
       filtered = orders.filter((order) => order.status === statusFilter);
     }
 
+    // A ordenação já está sendo feita no context, mas podemos garantir aqui também
     filtered = filtered.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -63,7 +64,7 @@ export const OrderManagement = () => {
     }).format(price);
   };
 
-  const formatDateTime = (date: Date) => {
+  const formatDateTime = (date: Date | string) => {
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -73,7 +74,7 @@ export const OrderManagement = () => {
     }).format(new Date(date));
   };
 
-  const getTimeAgo = (date: Date) => {
+  const getTimeAgo = (date: Date | string) => {
     const now = new Date();
     const diffMs = now.getTime() - new Date(date).getTime();
     const diffMins = Math.floor(diffMs / 1000 / 60);
@@ -90,22 +91,21 @@ export const OrderManagement = () => {
 
   const handleStatusUpdate = (orderId: string, newStatus: OrderStatus) => {
     updateOrderStatus(orderId, newStatus);
+    // A lógica de atualização do estado local agora é tratada pelo `OrderContext`
     if (selectedOrder && selectedOrder.id === orderId) {
-      const updatedOrder = orders.find((o) => o.id === orderId);
-      if (updatedOrder) {
-        setSelectedOrder(updatedOrder);
-      }
+       setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
     }
   };
 
+  // REATORADO: Retorna os valores corretos do Enum
   const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
     switch (currentStatus) {
-      case "received":
-        return "preparing";
-      case "preparing":
-        return "out_for_delivery";
-      case "out_for_delivery":
-        return "completed";
+      case "RECEIVED":
+        return "PREPARING";
+      case "PREPARING":
+        return "OUT_FOR_DELIVERY";
+      case "OUT_FOR_DELIVERY":
+        return "COMPLETED";
       default:
         return null;
     }
@@ -113,11 +113,11 @@ export const OrderManagement = () => {
 
   const getNextStatusLabel = (currentStatus: OrderStatus): string => {
     switch (currentStatus) {
-      case "received":
+      case "RECEIVED":
         return "Iniciar Preparo";
-      case "preparing":
+      case "PREPARING":
         return "Marcar como Saiu";
-      case "out_for_delivery":
+      case "OUT_FOR_DELIVERY":
         return "Finalizar Pedido";
       default:
         return "";
@@ -142,23 +142,21 @@ export const OrderManagement = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">
-                    Informações do Pedido
-                  </CardTitle>
+                  <CardTitle className="text-sm">Informações do Pedido</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Data/Hora:</span>
-                    <span>{formatDateTime(new Date(selectedOrder.createdAt))}</span>
+                    <span>{formatDateTime(selectedOrder.createdAt)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tempo decorrido:</span>
-                    <span>{getTimeAgo(new Date(selectedOrder.createdAt))}</span>
+                    <span>{getTimeAgo(selectedOrder.createdAt)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tipo:</span>
                     <Badge variant="outline">
-                      {selectedOrder.deliveryType === "delivery"
+                      {selectedOrder.deliveryType === "DELIVERY"
                         ? "Entrega"
                         : "Retirada"}
                     </Badge>
@@ -172,7 +170,7 @@ export const OrderManagement = () => {
                 </CardContent>
               </Card>
 
-              {/* --- BLOCO DE CLIENTE CORRIGIDO --- */}
+              {/* AJUSTE: Bloco de cliente corrigido */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center">
@@ -194,7 +192,7 @@ export const OrderManagement = () => {
             </div>
 
             {/* Delivery Address */}
-            {selectedOrder.deliveryType === "delivery" &&
+            {selectedOrder.deliveryType === "DELIVERY" &&
               selectedOrder.deliveryAddress && (
                 <Card>
                   <CardHeader className="pb-3">
@@ -205,14 +203,11 @@ export const OrderManagement = () => {
                   </CardHeader>
                   <CardContent className="text-sm">
                     <p>
-                      {selectedOrder.deliveryAddress.street},{" "}
-                      {selectedOrder.deliveryAddress.number}
-                      {selectedOrder.deliveryAddress.complement &&
-                        `, ${selectedOrder.deliveryAddress.complement}`}
+                      {selectedOrder.deliveryAddress.street}, {selectedOrder.deliveryAddress.number}
+                      {selectedOrder.deliveryAddress.complement && `, ${selectedOrder.deliveryAddress.complement}`}
                     </p>
                     <p>
-                      {selectedOrder.deliveryAddress.neighborhood} -{" "}
-                      {selectedOrder.deliveryAddress.city}
+                      {selectedOrder.deliveryAddress.neighborhood} - {selectedOrder.deliveryAddress.city}
                     </p>
                     <p>CEP: {selectedOrder.deliveryAddress.zipCode}</p>
                   </CardContent>
@@ -223,7 +218,7 @@ export const OrderManagement = () => {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center">
-                  {selectedOrder.payment.method === "cash" ? (
+                  {selectedOrder.payment.method === "CASH" ? (
                     <Banknote className="h-4 w-4 mr-2" />
                   ) : (
                     <CreditCard className="h-4 w-4 mr-2" />
@@ -232,16 +227,12 @@ export const OrderManagement = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-sm">
-                {selectedOrder.payment.method === "cash" ? (
+                {selectedOrder.payment.method === "CASH" ? (
                   <p>Dinheiro</p>
                 ) : (
                   <div className="space-y-1">
-                    <p>
-                      Cartão {selectedOrder.payment.cardBrand?.toUpperCase()}
-                    </p>
-                    <p className="capitalize">
-                      {selectedOrder.payment.cardType}
-                    </p>
+                    <p>Cartão {selectedOrder.payment.cardBrand?.toUpperCase()}</p>
+                    <p className="capitalize">{selectedOrder.payment.cardType}</p>
                   </div>
                 )}
               </CardContent>
@@ -259,42 +250,27 @@ export const OrderManagement = () => {
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
                           <h4 className="font-medium">
-                            {item.quantity}x {item.pizzaType.name} -{" "}
-                            {item.flavor.name}
+                            {item.quantity}x {item.pizzaType.name} - {item.flavor.name}
                           </h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {item.flavor.description}
-                          </p>
+                          <p className="text-sm text-gray-600 mt-1">{item.flavor.description}</p>
                         </div>
-                        <span className="font-semibold">
-                          {formatPrice(item.totalPrice)}
-                        </span>
+                        <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
                       </div>
-
                       {item.extras.length > 0 && (
                         <div className="ml-4">
-                          <p className="text-sm text-gray-600 mb-1">
-                            Adicionais:
-                          </p>
+                          <p className="text-sm text-gray-600 mb-1">Adicionais:</p>
                           <div className="flex flex-wrap gap-1">
                             {item.extras.map((extra) => (
-                              <Badge
-                                key={extra.id}
-                                variant="outline"
-                                className="text-xs"
-                              >
+                              <Badge key={extra.id} variant="outline" className="text-xs">
                                 {extra.name} (+{formatPrice(extra.price)})
                               </Badge>
                             ))}
                           </div>
                         </div>
                       )}
-
                       {item.observations && (
                         <div className="ml-4 mt-2">
-                          <p className="text-sm text-gray-600">
-                            <strong>Obs:</strong> {item.observations}
-                          </p>
+                          <p className="text-sm text-gray-600"><strong>Obs:</strong> {item.observations}</p>
                         </div>
                       )}
                     </div>
@@ -312,33 +288,27 @@ export const OrderManagement = () => {
                 <div className="flex space-x-2">
                   <Select
                     value={selectedOrder.status}
-                    onValueChange={(value) =>
-                      handleStatusUpdate(selectedOrder.id, value as OrderStatus)
-                    }
+                    onValueChange={(value) => handleStatusUpdate(selectedOrder.id, value as OrderStatus)}
                   >
                     <SelectTrigger className="flex-1">
                       <SelectValue />
                     </SelectTrigger>
+                    {/* REATORADO: Values correspondem aos Enums do backend */}
                     <SelectContent>
-                      <SelectItem value="received">Pedido Recebido</SelectItem>
-                      <SelectItem value="preparing">Em Preparo</SelectItem>
-                      <SelectItem value="out_for_delivery">
-                        {selectedOrder.deliveryType === "delivery"
-                          ? "Saiu para Entrega"
-                          : "Pronto para Retirada"}
+                      <SelectItem value="RECEIVED">Pedido Recebido</SelectItem>
+                      <SelectItem value="PREPARING">Em Preparo</SelectItem>
+                      <SelectItem value="OUT_FOR_DELIVERY">
+                        {selectedOrder.deliveryType === "DELIVERY" ? "Saiu para Entrega" : "Pronto para Retirada"}
                       </SelectItem>
-                      <SelectItem value="completed">Finalizado</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                      <SelectItem value="COMPLETED">Finalizado</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
                     </SelectContent>
                   </Select>
-
                   {getNextStatus(selectedOrder.status) && (
                     <Button
                       onClick={() => {
                         const nextStatus = getNextStatus(selectedOrder.status);
-                        if (nextStatus) {
-                          handleStatusUpdate(selectedOrder.id, nextStatus);
-                        }
+                        if (nextStatus) handleStatusUpdate(selectedOrder.id, nextStatus);
                       }}
                       className="bg-green-600 hover:bg-green-700"
                     >
@@ -357,15 +327,10 @@ export const OrderManagement = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Gerenciar Pedidos
-            </h1>
-            <p className="text-gray-600">
-              Visualize e atualize o status dos pedidos
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Gerenciar Pedidos</h1>
+            <p className="text-gray-600">Visualize e atualize o status dos pedidos</p>
           </div>
           <Button onClick={refreshOrders} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -373,51 +338,37 @@ export const OrderManagement = () => {
           </Button>
         </div>
 
-        {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <Filter className="h-5 w-5 mr-2" />
-              Filtros
-            </CardTitle>
+            <CardTitle className="flex items-center text-lg"><Filter className="h-5 w-5 mr-2" />Filtros</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
-                  Status:
-                </label>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Status:</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  {/* REATORADO: Values correspondem aos Enums do backend */}
                   <SelectContent>
                     <SelectItem value="all">Todos os Status</SelectItem>
-                    <SelectItem value="received">Pedido Recebido</SelectItem>
-                    <SelectItem value="preparing">Em Preparo</SelectItem>
-                    <SelectItem value="out_for_delivery">
-                      Saiu para Entrega / Retirada
-                    </SelectItem>
-                    <SelectItem value="completed">Finalizado</SelectItem>
-                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                    <SelectItem value="RECEIVED">Pedido Recebido</SelectItem>
+                    <SelectItem value="PREPARING">Em Preparo</SelectItem>
+                    <SelectItem value="OUT_FOR_DELIVERY">Saiu para Entrega / Retirada</SelectItem>
+                    <SelectItem value="COMPLETED">Finalizado</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 pt-5">
                 <span className="font-medium">{filteredOrders.length}</span>{" "}
-                pedido{filteredOrders.length !== 1 ? "s" : ""} encontrado
-                {filteredOrders.length !== 1 ? "s" : ""}
+                pedido{filteredOrders.length !== 1 ? "s" : ""} encontrado{filteredOrders.length !== 1 ? "s" : ""}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Orders List */}
         <Card>
-          <CardHeader>
-            <CardTitle>Pedidos</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Pedidos</CardTitle></CardHeader>
           <CardContent>
             {filteredOrders.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
@@ -427,72 +378,29 @@ export const OrderManagement = () => {
             ) : (
               <div className="space-y-4">
                 {filteredOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
+                  <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-semibold text-lg">
-                          Pedido #{order.id.substring(0,8)}
-                        </h3>
+                        <h3 className="font-semibold text-lg">Pedido #{order.id.substring(0,8)}</h3>
                         <OrderStatusBadge status={order.status} />
-                        <Badge variant="outline">
-                          {order.deliveryType === "delivery"
-                            ? "Entrega"
-                            : "Retirada"}
-                        </Badge>
+                        <Badge variant="outline">{order.deliveryType === "DELIVERY" ? "Entrega" : "Retirada"}</Badge>
                       </div>
-
                       <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-600">
-                        <div>
-                          {/* --- CORREÇÃO APLICADA AQUI --- */}
-                          <strong>Cliente:</strong> {order.customerUser?.name}
-                        </div>
-                        <div>
-                          <strong>Total:</strong>{" "}
-                          {formatPrice(order.totalAmount)}
-                        </div>
-                        <div>
-                          <strong>Criado:</strong> {getTimeAgo(new Date(order.createdAt))}
-                        </div>
+                        <div><strong>Cliente:</strong> {order.customerUser?.name}</div>
+                        <div><strong>Total:</strong> {formatPrice(order.totalAmount)}</div>
+                        <div><strong>Criado:</strong> {getTimeAgo(order.createdAt)}</div>
                       </div>
-
                       <div className="mt-2 text-sm text-gray-600">
-                        <strong>Itens:</strong>{" "}
-                        {order.items
-                          .map(
-                            (item) =>
-                              `${item.quantity}x ${item.pizzaType.name}`,
-                          )
-                          .join(", ")}
+                        <strong>Itens:</strong> {order.items.map((item) => `${item.quantity}x ${item.pizzaType.name}`).join(", ")}
                       </div>
                     </div>
-
                     <div className="flex items-center space-x-2 ml-4">
                       {getNextStatus(order.status) && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            const nextStatus = getNextStatus(order.status);
-                            if (nextStatus) {
-                              handleStatusUpdate(order.id, nextStatus);
-                            }
-                          }}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
+                        <Button size="sm" onClick={() => { const nextStatus = getNextStatus(order.status); if (nextStatus) handleStatusUpdate(order.id, nextStatus); }} className="bg-green-600 hover:bg-green-700">
                           {getNextStatusLabel(order.status)}
                         </Button>
                       )}
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setIsOrderDetailOpen(true);
-                        }}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => { setSelectedOrder(order); setIsOrderDetailOpen(true); }}>
                         <Eye className="h-4 w-4 mr-1" />
                         Detalhes
                       </Button>
@@ -503,8 +411,6 @@ export const OrderManagement = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Order Detail Dialog */}
         <OrderDetailDialog />
       </div>
     </AdminLayout>

@@ -2,7 +2,7 @@ package com.pizzadelivery.backend.controller;
 
 import com.pizzadelivery.backend.dto.CustomerDtos;
 import com.pizzadelivery.backend.entity.CustomerUser;
-import com.pizzadelivery.backend.repository.CustomerUserRepository; // Importe este repositório
+import com.pizzadelivery.backend.repository.CustomerUserRepository;
 import com.pizzadelivery.backend.security.JwtTokenProvider;
 import com.pizzadelivery.backend.service.CustomerService;
 import jakarta.validation.Valid;
@@ -14,13 +14,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/customer/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:8080")
 public class CustomerAuthController {
     private final CustomerService customerService;
     private final AuthenticationManager authenticationManager;
@@ -29,10 +28,15 @@ public class CustomerAuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@Valid @RequestBody CustomerDtos.RegisterRequest req) {
-        customerService.register(req);
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Usuário registrado com sucesso!");
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        try {
+            customerService.register(req);
+            Map<String, String> response = Collections.singletonMap("message", "Usuário registrado com sucesso!");
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            // REFACTOR: Captura a exceção e retorna um erro 409 (Conflict) com uma mensagem clara.
+            Map<String, String> errorResponse = Collections.singletonMap("message", e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        }
     }
 
     @PostMapping("/login")

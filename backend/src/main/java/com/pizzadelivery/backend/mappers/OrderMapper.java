@@ -7,7 +7,10 @@ import java.util.stream.Collectors;
 public class OrderMapper {
 
     public static ResponseDtos.OrderResponseDto toDto(Order order) {
-        // Converte a lista de entidades OrderItem para uma lista de DTOs
+        if (order == null) {
+            return null;
+        }
+
         var itemDtos = order.getItems().stream()
                 .map(item -> new ResponseDtos.OrderItemDto(
                         item.getId(),
@@ -19,14 +22,12 @@ public class OrderMapper {
                         item.getTotalPrice()
                 )).collect(Collectors.toList());
 
-        // Converte a entidade CustomerUser para um DTO seguro
         var customerDto = new ResponseDtos.CustomerUserDto(
                 order.getCustomerUser().getId(),
                 order.getCustomerUser().getName(),
                 order.getCustomerUser().getEmail()
         );
 
-        // Monta e retorna o DTO de resposta final
         return new ResponseDtos.OrderResponseDto(
                 order.getId(),
                 itemDtos,

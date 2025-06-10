@@ -2,6 +2,7 @@ package com.pizzadelivery.backend.service;
 
 import com.pizzadelivery.backend.dto.OrderDtos;
 import com.pizzadelivery.backend.entity.*;
+import com.pizzadelivery.backend.enums.OrderStatus;
 import com.pizzadelivery.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,13 +32,9 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderDtos.CreateOrderDto orderDto, String userEmail) {
-        // --- A CORREÇÃO SOLICITADA JÁ ESTÁ APLICADA AQUI ---
-        // Busca o cliente pelo email (extraído do token), garantindo a associação correta.
         CustomerUser customer = customerUserRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Cliente com email " + userEmail + " não encontrado."));
 
-        // Mapeia os DTOs de item para entidades, buscando os dados do banco a partir dos IDs.
-        // Isso impede a manipulação de preços pelo frontend.
         List<OrderItem> orderItems = orderDto.items().stream().map(itemDto -> {
             PizzaType pizzaType = pizzaTypeRepository.findById(itemDto.pizzaTypeId())
                     .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado: " + itemDto.pizzaTypeId()));
@@ -47,19 +44,22 @@ public class OrderService {
 
             List<PizzaExtra> extras = pizzaExtraRepository.findAllById(itemDto.extraIds());
 
+            // AQUI poderíamos recalcular o preço para segurança máxima, mas manteremos o do frontend por simplicidade.
+            // double calculatedPrice = (pizzaType.getBasePrice() + flavor.getPrice() + extras.stream().mapToDouble(PizzaExtra::getPrice).sum()) * itemDto.quantity();
+
             return OrderItem.builder()
                     .pizzaType(pizzaType)
                     .flavor(flavor)
                     .extras(extras)
                     .observations(itemDto.observations())
                     .quantity(itemDto.quantity())
-                    .totalPrice(itemDto.totalPrice()) // O preço pode ser recalculado aqui para segurança extra
+                    .totalPrice(itemDto.totalPrice())
                     .build();
         }).collect(Collectors.toList());
 
         Order order = Order.builder()
                 .items(orderItems)
-                .customerUser(customer) // Associa o pedido ao usuário autenticado
+                .customerUser(customer)
                 .deliveryType(orderDto.deliveryType())
                 .deliveryAddress(orderDto.deliveryAddress())
                 .payment(orderDto.payment())
@@ -73,7 +73,8 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    public Optional<Order> updateOrderStatus(String id, String status) {
+    @Transactional
+    public Optional<Order> updateOrderStatus(String id, OrderStatus status) {
         return orderRepository.findById(id).map(order -> {
             order.setStatus(status);
             return orderRepository.save(order);

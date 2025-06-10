@@ -14,11 +14,10 @@ import java.security.Principal;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:8080")
 public class OrderController {
     private final OrderService orderService;
 
-    // Endpoint público para rastrear UM pedido
+    // Endpoint público para rastrear UM pedido por ID.
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDtos.OrderResponseDto> getOrderById(@PathVariable String id) {
         return orderService.getOrderById(id)
@@ -27,6 +26,7 @@ public class OrderController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Endpoint para um CLIENTE criar um pedido. Requer autenticação.
     @PostMapping
     public ResponseEntity<ResponseDtos.OrderResponseDto> createOrder(@RequestBody OrderDtos.CreateOrderDto orderDto, Principal principal) {
         if (principal == null || principal.getName() == null) {
