@@ -1,6 +1,18 @@
 import { createContext, useState, useContext, ReactNode, useCallback, useMemo, useEffect } from "react";
-import apiService from "@/services/apiService";
-import { AuthDtos } from "@/dto";
+import { api } from "@/services/apiService";
+import { AuthDtos } from "@/dto"; // Importa o namespace dos DTOs
+
+// --- Type Guard para a resposta do Login ---
+function isLoginResponse(data: any): data is AuthDtos.LoginResponse {
+  return (
+    data &&
+    typeof data === 'object' &&
+    'token' in data &&
+    typeof data.token === 'string' &&
+    'name' in data &&
+    typeof data.name === 'string'
+  );
+}
 
 interface CustomerAuthContextType {
   isAuthenticated: boolean;
@@ -31,8 +43,14 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(async (email, password) => {
     try {
-      const response = await apiService.customerLogin(email, password);
-      if (response?.token) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("adminName");
+      
+      const response = await api.customer.login(email, password);
+
+      // --- CORREÇÃO APLICADA ---
+      // Usa o type guard para validar a resposta antes de usar .token e .name
+      if (isLoginResponse(response)) {
         localStorage.setItem("customerAuthToken", response.token);
         localStorage.setItem("customerName", response.name);
         setCustomerName(response.name);
@@ -40,24 +58,25 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
       }
       return false;
     } catch (error) {
-      console.error("Customer login failed:", error);
+      console.error("Falha no login do cliente:", error);
       return false;
     }
   }, []);
 
   const register = useCallback(async (data) => {
     try {
-      await apiService.customerRegister(data);
-      // Após o registro, faz o login automaticamente
+      await api.customer.register(data);
       return await login(data.email, data.password);
     } catch(error) {
-      console.error("Customer registration failed:", error);
-      alert("Falha no registro: " + error.message);
+      console.error("Falha no registro do cliente:", error);
+      alert("Falha no registro: " + (error instanceof Error ? error.message : "Erro desconhecido"));
       return false;
     }
   }, [login]);
 
   const logout = useCallback(() => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("adminName");
     localStorage.removeItem("customerAuthToken");
     localStorage.removeItem("customerName");
     setCustomerName(null);

@@ -31,6 +31,7 @@ public class OrderMapper {
                 order.getId(),
                 itemDtos,
                 customerDto,
+                order.getDeliveryType(),
                 order.getDeliveryAddress(),
                 order.getPayment(),
                 order.getStatus(),

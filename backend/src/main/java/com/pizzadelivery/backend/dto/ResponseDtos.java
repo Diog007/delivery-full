@@ -4,7 +4,6 @@ import com.pizzadelivery.backend.entity.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// DTOs para formatar as respostas da API, evitando LazyInitializationException
 public class ResponseDtos {
 
     // Representação segura de um usuário para a API
@@ -26,6 +25,7 @@ public class ResponseDtos {
             String id,
             List<OrderItemDto> items,
             CustomerUserDto customerUser,
+            String deliveryType,
             DeliveryAddress deliveryAddress,
             Payment payment,
             String status,

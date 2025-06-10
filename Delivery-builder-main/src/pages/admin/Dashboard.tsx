@@ -158,8 +158,8 @@ export const AdminDashboard = () => {
                     <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1"><span className="font-medium">Pedido #{order.id}</span><OrderStatusBadge status={order.status} /></div>
-                        {/* --- CORREÇÃO APLICADA AQUI --- */}
-                        <p className="text-sm text-gray-600">{order.customerUser?.name} - {getTimeAgo(order.createdAt)}</p>
+                        {/* --- CORREÇÃO APLICADA --- */}
+                        <p className="text-sm text-gray-600">{order.customerUser?.name} - {getTimeAgo(new Date(order.createdAt))}</p>
                         <p className="text-sm font-medium">{formatPrice(order.totalAmount)}</p>
                       </div>
                       <Button variant="outline" size="sm"><Eye className="h-4 w-4" /></Button>
@@ -189,9 +189,9 @@ export const AdminDashboard = () => {
                     <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1"><span className="font-medium">Pedido #{order.id}</span><OrderStatusBadge status={order.status} /></div>
-                        {/* --- CORREÇÃO APLICADA AQUI --- */}
+                         {/* --- CORREÇÃO APLICADA --- */}
                         <p className="text-sm text-gray-600">{order.customerUser?.name}</p>
-                        <p className="text-xs text-gray-500">{formatDateTime(order.createdAt)}</p>
+                        <p className="text-xs text-gray-500">{formatDateTime(new Date(order.createdAt))}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">{formatPrice(order.totalAmount)}</p>

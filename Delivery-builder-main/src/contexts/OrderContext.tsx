@@ -2,14 +2,14 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   ReactNode,
   useCallback,
   useMemo,
+  useEffect, // Adicionando useEffect para o carregamento inicial
 } from "react";
 import { Order, OrderStatus } from "@/types";
 import { OrderDtos } from "@/dto";
-import apiService from "@/services/apiService";
+import { api } from "@/services/apiService";
 
 interface OrderContextType {
   orders: Order[];
@@ -30,72 +30,63 @@ export const useOrders = () => {
   return context;
 };
 
-interface OrderProviderProps {
-  children: ReactNode;
-}
-
-export const OrderProvider = ({ children }: OrderProviderProps) => {
+export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- CORREÇÃO: Usando useCallback para estabilizar a função ---
   const refreshOrders = useCallback(async () => {
     setIsLoading(true);
     try {
-      const allOrders = await apiService.getAllOrders();
+      const allOrders = await api.admin.getAllOrders();
       setOrders(Array.isArray(allOrders) ? allOrders : []);
     } catch (error) {
-      console.error("Failed to fetch orders:", error);
-      setOrders([]); // Garante que orders seja sempre um array
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
-  }, []); // Array de dependências vazio, pois a função não depende de props/state
+  }, []);
 
+  // Carrega os pedidos quando o provedor é montado pela primeira vez
   useEffect(() => {
     refreshOrders();
   }, [refreshOrders]);
 
-  // --- CORREÇÃO: Usando useCallback ---
   const createOrder = useCallback(async (orderData: OrderDtos.CreateOrderDto) => {
     setIsLoading(true);
     try {
-      const newOrder = await apiService.createOrder(orderData);
-      await refreshOrders(); // Atualiza a lista de pedidos
+      const newOrder = await api.customer.createOrder(orderData);
+      refreshOrders();
       return newOrder;
     } catch (error) {
-      console.error("Failed to create order:", error);
+      console.error("Falha ao criar pedido:", error);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, [refreshOrders]); // Depende de refreshOrders
+  }, [refreshOrders]);
 
-  // --- CORREÇÃO: Usando useCallback ---
   const getOrderById = useCallback(async (id: string) => {
     setIsLoading(true);
     try {
-      const order = await apiService.getOrderById(id);
+      const order = await api.public.getOrderById(id);
       return order;
     } catch (error) {
-      console.error(`Failed to fetch order ${id}:`, error);
+      console.error(`Falha ao buscar pedido ${id}:`, error);
       return undefined;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // --- CORREÇÃO: Usando useCallback ---
   const updateOrderStatus = useCallback(async (id: string, status: OrderStatus) => {
     try {
-      await apiService.updateOrderStatus(id, status);
+      await api.admin.updateOrderStatus(id, status);
       await refreshOrders();
     } catch (error) {
-      console.error(`Failed to update order status for ${id}:`, error);
+      console.error(`Falha ao atualizar status do pedido ${id}:`, error);
     }
-  }, [refreshOrders]); // Depende de refreshOrders
+  }, [refreshOrders]);
 
-  // --- Otimização: Usando useMemo para o valor do contexto ---
   const contextValue = useMemo(() => ({
     orders,
     isLoading,

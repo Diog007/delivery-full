@@ -10,10 +10,13 @@ export namespace AuthDtos {
   }
 }
 
-// Tipos para a criação de Pedidos
+/**
+ * --- DTOs CORRIGIDOS ---
+ * Tipos para a criação de Pedidos, alinhados com o backend.
+ */
 export namespace OrderDtos {
 
-  // DTO para os itens do carrinho enviados na requisição
+  // DTO para os itens do carrinho enviados na requisição (usando IDs)
   export interface CartItemRequestDto {
     pizzaTypeId: string;
     flavorId: string;
@@ -26,7 +29,6 @@ export namespace OrderDtos {
   // DTO para a requisição de criação de pedido
   export interface CreateOrderDto {
     items: CartItemRequestDto[];
-    // O campo 'customer' é removido, pois o backend usa o token para identificar o cliente
     deliveryType: "delivery" | "pickup";
     deliveryAddress?: DeliveryAddress;
     payment: Payment;

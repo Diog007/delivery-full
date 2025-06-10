@@ -36,20 +36,21 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Endpoints Públicos (verificados primeiro)
+                        // Endpoints Públicos
                         .requestMatchers("/api/auth/**", "/api/customer/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/menu/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/orders/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").permitAll() // Rastreamento público por ID
                         .requestMatchers("/h2-console/**").permitAll()
 
-                        // 2. Endpoints de Admin (protegidos)
+                        // Endpoints de Admin
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-                        // 3. Endpoints de Cliente (protegidos)
+                        // --- REGRA CORRIGIDA ---
+                        // Endpoints de Cliente (requerem autenticação de cliente)
                         .requestMatchers("/api/customer/**").hasAuthority("ROLE_CUSTOMER")
-                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CUSTOMER") // Apenas clientes podem criar pedidos
 
-                        // 4. Qualquer outra requisição precisa de autenticação
+                        // Qualquer outra requisição precisa de autenticação
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(headersConfig -> headersConfig.sameOrigin()))
@@ -58,6 +59,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // ... (O restante do arquivo permanece o mesmo)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

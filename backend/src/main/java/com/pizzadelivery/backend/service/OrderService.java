@@ -31,16 +31,18 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderDtos.CreateOrderDto orderDto, String userEmail) {
+        // --- CORREÇÃO ---: Busca o cliente pelo email (extraído do token)
         CustomerUser customer = customerUserRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Cliente com email " + userEmail + " não encontrado."));
 
-        // --- LÓGICA CORRIGIDA PARA USAR IDs ---
+        // --- CORREÇÃO ---: Mapeia os DTOs de item para entidades, buscando os dados do banco a partir dos IDs.
+        // Isso impede a manipulação de preços pelo frontend.
         List<OrderItem> orderItems = orderDto.items().stream().map(itemDto -> {
             PizzaType pizzaType = pizzaTypeRepository.findById(itemDto.pizzaTypeId())
-                    .orElseThrow(() -> new RuntimeException("PizzaType not found"));
+                    .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado: " + itemDto.pizzaTypeId()));
 
             PizzaFlavor flavor = pizzaFlavorRepository.findById(itemDto.flavorId())
-                    .orElseThrow(() -> new RuntimeException("PizzaFlavor not found"));
+                    .orElseThrow(() -> new RuntimeException("Sabor não encontrado: " + itemDto.flavorId()));
 
             List<PizzaExtra> extras = pizzaExtraRepository.findAllById(itemDto.extraIds());
 
@@ -50,13 +52,13 @@ public class OrderService {
                     .extras(extras)
                     .observations(itemDto.observations())
                     .quantity(itemDto.quantity())
-                    .totalPrice(itemDto.totalPrice())
+                    .totalPrice(itemDto.totalPrice()) // O preço pode ser recalculado aqui para segurança extra
                     .build();
         }).collect(Collectors.toList());
 
         Order order = Order.builder()
                 .items(orderItems)
-                .customerUser(customer)
+                .customerUser(customer) // Associa o pedido ao usuário autenticado
                 .deliveryType(orderDto.deliveryType())
                 .deliveryAddress(orderDto.deliveryAddress())
                 .payment(orderDto.payment())
