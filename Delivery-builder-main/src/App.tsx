@@ -12,7 +12,7 @@ import { CustomerAuthProvider } from "./contexts/CustomerAuthContext";
 
 // Components
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { CustomerProtectedRoute } from "./components/CustomerProtectedRoute"; // <-- NOVA IMPORTAÇÃO
+import { CustomerProtectedRoute } from "./components/CustomerProtectedRoute";
 
 // Client Pages
 import { HomePage } from "@/pages/client/HomePage";
@@ -20,7 +20,7 @@ import { PizzaCustomization } from "@/pages/client/PizzaCustomization";
 import { Cart } from "@/pages/client/Cart";
 import { Checkout } from "@/pages/client/Checkout";
 import { OrderTracking } from "@/pages/client/OrderTracking";
-import { MyOrders } from "./pages/client/MyOrders"; // <-- Importação que você já tinha
+import { MyOrders } from "./pages/client/MyOrders";
 
 // Admin Pages
 import { AdminLogin } from "@/pages/admin/Login";
@@ -30,6 +30,7 @@ import { OrderManagement } from "@/pages/admin/OrderManagement";
 
 // General Pages
 import NotFound from "./pages/NotFound";
+import { CustomerManagement } from "./pages/admin/CustomerManagement";
 
 const queryClient = new QueryClient();
 
@@ -52,7 +53,6 @@ const App = () => (
                   <Route path="/tracking" element={<OrderTracking />} />
                   <Route path="/tracking/:orderId" element={<OrderTracking />} />
                   
-                  {/* --- NOVA ROTA PROTEGIDA PARA CLIENTES --- */}
                   <Route
                     path="/my-orders"
                     element={
@@ -89,6 +89,14 @@ const App = () => (
                     element={
                       <ProtectedRoute>
                         <OrderManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                   <Route
+                    path="/admin/customers"
+                    element={
+                      <ProtectedRoute>
+                        <CustomerManagement />
                       </ProtectedRoute>
                     }
                   />

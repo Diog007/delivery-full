@@ -13,7 +13,6 @@ import { Plus, Edit, Trash2, Pizza, Package, Star } from "lucide-react";
 import { PizzaType, PizzaFlavor, PizzaExtra } from "@/types";
 import { api } from "@/services/apiService";
 
-// Helper para formatar preço
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -21,27 +20,34 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-// Componente do Dialog para Tipos de Pizza
 const TypeDialog = ({ open, setOpen, editingItem, onSave }) => {
   const [formData, setFormData] = useState({ name: "", description: "", basePrice: 0 });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setFormData(editingItem || { name: "", description: "", basePrice: 0 });
-  }, [editingItem]);
+    setImageFile(null);
+  }, [editingItem, open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      let savedType;
       if (editingItem) {
-        await api.admin.updatePizzaType(editingItem.id, formData);
+        savedType = await api.admin.updatePizzaType(editingItem.id, formData);
       } else {
-        await api.admin.createPizzaType(formData);
+        savedType = await api.admin.createPizzaType(formData);
+      }
+
+      if (imageFile && savedType) {
+        await api.admin.uploadPizzaTypeImage(savedType.id, imageFile);
       }
       onSave();
     } catch (error) {
       console.error("Failed to save pizza type", error);
+      alert("Erro ao salvar o tipo de pizza: " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +63,7 @@ const TypeDialog = ({ open, setOpen, editingItem, onSave }) => {
           <div><Label htmlFor="name">Nome</Label><Input id="name" value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} required /></div>
           <div><Label htmlFor="description">Descrição</Label><Textarea id="description" value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} required /></div>
           <div><Label htmlFor="basePrice">Preço Base (R$)</Label><Input id="basePrice" type="number" step="0.01" value={formData.basePrice} onChange={(e) => setFormData(p => ({ ...p, basePrice: parseFloat(e.target.value) || 0 }))} required /></div>
+          <div><Label htmlFor="typeImage">Imagem do Tipo</Label><Input id="typeImage" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} /></div>
           <div className="flex justify-end space-x-2"><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancelar</Button><Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar'}</Button></div>
         </form>
       </DialogContent>
@@ -64,35 +71,47 @@ const TypeDialog = ({ open, setOpen, editingItem, onSave }) => {
   );
 };
 
-// Componente do Dialog para Sabores de Pizza
 const FlavorDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
   const [formData, setFormData] = useState({ name: "", description: "", price: 0, pizzaTypeId: "" });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setFormData(editingItem ? { ...editingItem, pizzaTypeId: editingItem.pizzaType.id } : { name: "", description: "", price: 0, pizzaTypeId: "" });
-  }, [editingItem]);
+    if (editingItem) {
+      setFormData({ ...editingItem, pizzaTypeId: editingItem.pizzaType.id });
+    } else {
+      setFormData({ name: "", description: "", price: 0, pizzaTypeId: "" });
+    }
+    setImageFile(null);
+  }, [editingItem, open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    
     const payload = {
         name: formData.name,
         description: formData.description,
         price: formData.price,
-        pizzaType: { id: formData.pizzaTypeId } // Envia o tipo como um objeto com ID
+        pizzaType: { id: formData.pizzaTypeId }
     };
+
     try {
+      let savedFlavor;
       if (editingItem) {
-        // --- CORREÇÃO APLICADA AQUI ---
-        await api.admin.updatePizzaFlavor(editingItem.id, payload as any);
+        savedFlavor = await api.admin.updatePizzaFlavor(editingItem.id, payload as any);
       } else {
-        // --- CORREÇÃO APLICADA AQUI ---
-        await api.admin.createPizzaFlavor(payload as any);
+        savedFlavor = await api.admin.createPizzaFlavor(payload as any);
       }
+      
+      if (imageFile && savedFlavor) {
+        await api.admin.uploadFlavorImage(savedFlavor.id, imageFile);
+      }
+
       onSave();
     } catch (error) {
       console.error("Failed to save pizza flavor", error);
+      alert("Erro ao salvar sabor: " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +131,7 @@ const FlavorDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
                     </Select>
                 </div>
                 <div><Label htmlFor="flavorPrice">Preço Adicional (R$)</Label><Input id="flavorPrice" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData(p => ({...p, price: parseFloat(e.target.value) || 0}))} required /></div>
+                <div><Label htmlFor="image">Imagem do Sabor</Label><Input id="image" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} /></div>
                 <div className="flex justify-end space-x-2"><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancelar</Button><Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar'}</Button></div>
             </form>
         </DialogContent>
@@ -119,7 +139,6 @@ const FlavorDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
   );
 };
 
-// Componente do Dialog para Adicionais
 const ExtraDialog = ({ open, setOpen, editingItem, onSave }) => {
   const [formData, setFormData] = useState({ name: "", description: "", price: 0 });
   const [isLoading, setIsLoading] = useState(false);
@@ -164,13 +183,10 @@ export const MenuManagement = () => {
   const [pizzaTypes, setPizzaTypes] = useState<PizzaType[]>([]);
   const [pizzaFlavors, setPizzaFlavors] = useState<PizzaFlavor[]>([]);
   const [pizzaExtras, setPizzaExtras] = useState<PizzaExtra[]>([]);
-
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<PizzaType | null>(null);
-  
   const [isFlavorDialogOpen, setIsFlavorDialogOpen] = useState(false);
   const [editingFlavor, setEditingFlavor] = useState<PizzaFlavor | null>(null);
-
   const [isExtraDialogOpen, setIsExtraDialogOpen] = useState(false);
   const [editingExtra, setEditingExtra] = useState<PizzaExtra | null>(null);
 
@@ -201,7 +217,7 @@ export const MenuManagement = () => {
       new: () => { setEditingType(null); setIsTypeDialogOpen(true); },
       edit: (item) => { setEditingType(item); setIsTypeDialogOpen(true); },
       delete: async (id) => {
-        if (window.confirm("Tem certeza?")) {
+        if (window.confirm("Tem certeza que deseja excluir este tipo? Sabores associados podem causar erros.")) {
           try { await api.admin.deletePizzaType(id); loadData(); } 
           catch (error) { alert("Falha ao excluir. Verifique se não há sabores associados."); }
         }
@@ -211,7 +227,7 @@ export const MenuManagement = () => {
       new: () => { setEditingFlavor(null); setIsFlavorDialogOpen(true); },
       edit: (item) => { setEditingFlavor(item); setIsFlavorDialogOpen(true); },
       delete: async (id) => {
-        if (window.confirm("Tem certeza?")) {
+        if (window.confirm("Tem certeza que deseja excluir este sabor?")) {
           try { await api.admin.deletePizzaFlavor(id); loadData(); } 
           catch (error) { alert("Falha ao excluir."); }
         }
@@ -221,7 +237,7 @@ export const MenuManagement = () => {
       new: () => { setEditingExtra(null); setIsExtraDialogOpen(true); },
       edit: (item) => { setEditingExtra(item); setIsExtraDialogOpen(true); },
       delete: async (id) => {
-        if (window.confirm("Tem certeza?")) {
+        if (window.confirm("Tem certeza que deseja excluir este adicional?")) {
           try { await api.admin.deletePizzaExtra(id); loadData(); }
           catch (error) { alert("Falha ao excluir."); }
         }
@@ -246,6 +262,13 @@ export const MenuManagement = () => {
               <CardContent className="grid gap-4">
                 {pizzaTypes.map((item) => (
                   <div key={item.id} className="flex items-center p-4 border rounded-lg">
+                    {item.imageUrl ? (
+                        <img src={`http://localhost:8090${item.imageUrl}`} alt={item.name} className="w-20 h-20 rounded-md object-cover mr-4" />
+                    ) : (
+                        <div className="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 mr-4 flex-shrink-0">
+                            <Pizza className="h-8 w-8" />
+                        </div>
+                    )}
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{item.name}</h3>
                       <p className="text-sm text-gray-600 mt-1">{item.description}</p>
@@ -264,6 +287,13 @@ export const MenuManagement = () => {
               <CardContent className="grid gap-4">
                 {pizzaFlavors.map((item) => (
                   <div key={item.id} className="flex items-center p-4 border rounded-lg">
+                    {item.imageUrl ? (
+                        <img src={`http://localhost:8090${item.imageUrl}`} alt={item.name} className="w-20 h-20 rounded-md object-cover mr-4" />
+                    ) : (
+                        <div className="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 mr-4 flex-shrink-0">
+                            <Star className="h-8 w-8" />
+                        </div>
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1"><h3 className="font-semibold">{item.name}</h3><Badge variant="outline">{item.pizzaType?.name}</Badge></div>
                       <p className="text-sm text-gray-600">{item.description}</p>

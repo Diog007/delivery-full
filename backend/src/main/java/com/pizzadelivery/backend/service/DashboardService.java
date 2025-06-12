@@ -2,6 +2,7 @@ package com.pizzadelivery.backend.service;
 
 import com.pizzadelivery.backend.dto.DashboardDtos;
 import com.pizzadelivery.backend.entity.Order;
+import com.pizzadelivery.backend.enums.OrderStatus; // --- ADICIONE ESTE IMPORT ---
 import com.pizzadelivery.backend.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,8 +35,11 @@ public class DashboardService {
 
         // Pending orders
         List<Order> allOrders = orderRepository.findAll();
+        // --- CORREÇÃO APLICADA AQUI ---
+        // Comparamos com Enums em vez de Strings em minúsculas.
         long pendingOrders = allOrders.stream()
-                .filter(o -> List.of("received", "preparing", "out_for_delivery").contains(o.getStatus()))
+                .filter(o -> List.of(OrderStatus.RECEIVED, OrderStatus.PREPARING, OrderStatus.OUT_FOR_DELIVERY)
+                        .contains(o.getStatus()))
                 .count();
 
         // Revenue calculation
@@ -51,5 +55,14 @@ public class DashboardService {
         return orderRepository.findByCreatedAtBetween(start, end).stream()
                 .mapToDouble(Order::getTotalAmount)
                 .sum();
+    }
+
+    public List<DashboardDtos.DailySale> getWeeklySalesChartData() {
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        return orderRepository.findRevenuePerDaySince(sevenDaysAgo);
+    }
+
+    public List<DashboardDtos.SalesByPizzaType> getSalesByPizzaTypeChartData() {
+        return orderRepository.countOrdersByPizzaType();
     }
 }

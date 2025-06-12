@@ -32,19 +32,16 @@ export const Checkout = () => {
     const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress>({ street: "", number: "", complement: "", neighborhood: "", city: "", zipCode: "" });
     const [observations, setObservations] = useState("");
 
-    // --- NOVO: Estados para os detalhes do cartão ---
     const [cardType, setCardType] = useState<"credit" | "debit">("credit");
     const [cardBrand, setCardBrand] = useState<string>("visa");
     
-    // Estado unificado para o pagamento
     const [payment, setPayment] = useState<Payment>({ method: "CARD", cardType: "credit", cardBrand: "visa"});
 
-    // --- NOVO: Efeito para manter o objeto de pagamento sincronizado ---
     useEffect(() => {
         if (paymentMethod === 'CARD') {
             setPayment({ method: 'CARD', cardType, cardBrand });
         } else {
-            setPayment({ method: 'CASH', cardType: undefined, cardBrand: undefined });
+            setPayment({ method: 'CASH' });
         }
     }, [paymentMethod, cardType, cardBrand]);
 
@@ -85,17 +82,18 @@ export const Checkout = () => {
                 quantity: item.quantity,
                 totalPrice: item.totalPrice,
             }));
-
+            
+            // --- ALTERAÇÃO PRINCIPAL AQUI ---
+            // Objeto de dados do pedido sem os campos 'createdAt' e 'estimatedDeliveryTime'.
+            // O backend agora é responsável por definir esses valores.
             const orderData: CreateOrderDto = {
                 items: itemsForApi,
                 deliveryType,
                 deliveryAddress: deliveryType === "DELIVERY" ? deliveryAddress : undefined,
-                payment: payment, // Usa o objeto de pagamento unificado
+                payment: payment,
                 status: "RECEIVED",
                 totalAmount: finalTotal,
                 observations,
-                createdAt: new Date(),
-                estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000), // 45 min
             };
 
             const createdOrder = await api.customer.createOrder(orderData);
@@ -178,7 +176,6 @@ export const Checkout = () => {
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="CASH" id="cash" /><Label htmlFor="cash">Dinheiro</Label></div>
                                         </RadioGroup>
 
-                                        {/* --- NOVO: Bloco condicional para detalhes do cartão --- */}
                                         {paymentMethod === 'CARD' && (
                                             <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
                                                 <div>

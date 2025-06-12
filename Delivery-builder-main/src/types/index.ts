@@ -1,5 +1,3 @@
-// REFACTOR: Tipos alinhados com os Enums e DTOs do backend refatorado.
-
 export type OrderStatus =
   | "RECEIVED"
   | "PREPARING"
@@ -15,6 +13,7 @@ export interface PizzaType {
   name: string;
   description: string;
   basePrice: number;
+  imageUrl?: string;
 }
 
 export interface PizzaFlavor {
@@ -23,6 +22,7 @@ export interface PizzaFlavor {
   description: string;
   pizzaType: PizzaType;
   price: number;
+  imageUrl?: string;
 }
 
 export interface PizzaExtra {
@@ -33,7 +33,7 @@ export interface PizzaExtra {
 }
 
 export interface CartItem {
-  id: string; // ID gerado no frontend para o item do carrinho
+  id: string;
   pizzaType: PizzaType;
   flavor: PizzaFlavor;
   extras: PizzaExtra[];
@@ -42,7 +42,6 @@ export interface CartItem {
   totalPrice: number;
 }
 
-// Representação segura do usuário que vem na resposta da API.
 export interface CustomerUserDto {
   id: string;
   name: string;
@@ -64,16 +63,15 @@ export interface Payment {
   cardType?: string;
 }
 
-// A interface principal para um Pedido, espelhando o OrderResponseDto do backend.
 export interface Order {
   id: string;
-  items: CartItem[]; // Frontend usa a interface CartItem que é compatível com OrderItemDto
+  items: CartItem[];
   customerUser: CustomerUserDto;
   deliveryType: DeliveryType;
   deliveryAddress?: DeliveryAddress;
   payment: Payment;
   status: OrderStatus;
-  createdAt: string; // Usar string para datas da API é mais seguro para serialização
+  createdAt: string;
   estimatedDeliveryTime?: string;
   totalAmount: number;
   observations?: string;
@@ -95,4 +93,32 @@ export interface DashboardStats {
     week: number;
     month: number;
   };
+}
+export interface DailySale {
+  date: string;
+  revenue: number;
+}
+
+export interface SalesByPizzaType {
+  pizzaTypeName: string;
+  count: number;
+}
+
+export interface Address {
+    id: string;
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    zipCode: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  cpf: string;
+  addresses: Address[];
 }

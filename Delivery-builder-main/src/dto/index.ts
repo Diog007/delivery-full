@@ -1,9 +1,6 @@
-// REFACTOR: DTOs de requisição alinhados com o backend.
-
 import { DeliveryAddress, DeliveryType, OrderStatus, Payment } from "@/types";
 
 export namespace OrderDtos {
-  // DTO para os itens do carrinho enviados na requisição (usando IDs)
   export interface CartItemRequestDto {
     pizzaTypeId: string;
     flavorId: string;
@@ -13,7 +10,6 @@ export namespace OrderDtos {
     totalPrice: number;
   }
 
-  // DTO para a requisição de criação de pedido
   export interface CreateOrderDto {
     items: CartItemRequestDto[];
     deliveryType: DeliveryType;
@@ -22,22 +18,40 @@ export namespace OrderDtos {
     status: OrderStatus;
     totalAmount: number;
     observations?: string;
-    createdAt: Date; // O frontend envia um objeto Date, que será serializado para string
-    estimatedDeliveryTime?: Date;
   }
 }
 
 export namespace AuthDtos {
-    // Resposta do login de Admin ou Cliente
     export interface LoginResponse {
       token: string;
       name: string;
-      email?: string; // Opcional, pois o admin não tem email
+      email?: string;
     }
 
-    // Requisição de login de Admin
     export interface AdminLoginRequest {
-        username,
-        password
+        username: string;
+        password: string;
+    }
+}
+
+export namespace CustomerDtos {
+    export interface AdminCustomerUpdateRequest {
+      name: string;
+      email: string;
+      whatsapp: string;
+      cpf: string;
+    }
+    
+    export interface RegisterRequest {
+        name: string;
+        email: string;
+        password: string;
+        whatsapp?: string;
+        cpf?: string;
+    }
+
+    export interface LoginRequest {
+        email: string;
+        password: string;
     }
 }

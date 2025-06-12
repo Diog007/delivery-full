@@ -1,5 +1,6 @@
 package com.pizzadelivery.backend.controller;
 
+import com.pizzadelivery.backend.dto.CustomerDtos;
 import com.pizzadelivery.backend.dto.DashboardDtos;
 import com.pizzadelivery.backend.dto.OrderDtos;
 import com.pizzadelivery.backend.dto.ResponseDtos;
@@ -8,6 +9,7 @@ import com.pizzadelivery.backend.entity.PizzaExtra;
 import com.pizzadelivery.backend.entity.PizzaFlavor;
 import com.pizzadelivery.backend.entity.PizzaType;
 import com.pizzadelivery.backend.mappers.OrderMapper;
+import com.pizzadelivery.backend.service.CustomerService;
 import com.pizzadelivery.backend.service.DashboardService;
 import com.pizzadelivery.backend.service.MenuService;
 import com.pizzadelivery.backend.service.OrderService;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +30,7 @@ public class AdminController {
     private final DashboardService dashboardService;
     private final OrderService orderService;
     private final MenuService menuService;
+    private final CustomerService customerService;
 
     @GetMapping("/orders")
     public ResponseEntity<List<ResponseDtos.OrderResponseDto>> getAllOrders() {
@@ -37,9 +41,25 @@ public class AdminController {
         return ResponseEntity.ok(orderDtos);
     }
 
+
+    @GetMapping("/dashboard/weekly-sales")
+    public ResponseEntity<List<DashboardDtos.DailySale>> getWeeklySales() {
+        return ResponseEntity.ok(dashboardService.getWeeklySalesChartData());
+    }
+
+    @GetMapping("/dashboard/sales-by-type")
+    public ResponseEntity<List<DashboardDtos.SalesByPizzaType>> getSalesByType() {
+        return ResponseEntity.ok(dashboardService.getSalesByPizzaTypeChartData());
+    }
+
     @GetMapping("/dashboard/stats")
     public ResponseEntity<DashboardDtos.DashboardStats> getDashboardStats() {
         return ResponseEntity.ok(dashboardService.getDashboardStats());
+    }
+
+    @PostMapping("/flavors/{id}/image")
+    public ResponseEntity<PizzaFlavor> uploadFlavorImage(@PathVariable String id, @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(menuService.saveFlavorImage(id, file));
     }
 
     @PatchMapping("/orders/{id}/status")
@@ -50,6 +70,23 @@ public class AdminController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/customers")
+    public ResponseEntity<List<CustomerDtos.CustomerResponseDto>> getAllCustomers() {
+        return ResponseEntity.ok(customerService.getAllCustomers());
+    }
+
+    @PutMapping("/customers/{id}")
+    public ResponseEntity<CustomerDtos.CustomerResponseDto> updateCustomer(@PathVariable String id, @RequestBody CustomerDtos.AdminCustomerUpdateRequest updateRequest) {
+        return ResponseEntity.ok(customerService.updateCustomer(id, updateRequest));
+    }
+
+    @DeleteMapping("/customers/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable String id) {
+        customerService.deleteCustomerById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
     // --- Endpoints de Gerenciamento de Cardápio ---
     @PostMapping("/types")
     public ResponseEntity<PizzaType> createType(@RequestBody PizzaType type) {
@@ -59,6 +96,12 @@ public class AdminController {
     public ResponseEntity<PizzaType> updateType(@PathVariable String id, @RequestBody PizzaType type) {
         return ResponseEntity.ok(menuService.updateType(id, type));
     }
+
+    @PostMapping("/types/{id}/image")
+    public ResponseEntity<PizzaType> uploadPizzaTypeImage(@PathVariable String id, @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(menuService.savePizzaTypeImage(id, file));
+    }
+
     @DeleteMapping("/types/{id}")
     public ResponseEntity<Void> deleteType(@PathVariable String id) {
         menuService.deleteType(id);

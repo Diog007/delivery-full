@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Pizza } from "lucide-react";
 import { PizzaType, PizzaFlavor, PizzaExtra } from "@/types";
 import { api } from "@/services/apiService";
 import { useCart } from "@/contexts/CartContext";
@@ -134,14 +134,21 @@ export const PizzaCustomization = () => {
                     {flavors.map((flavor) => (
                       <div
                         key={flavor.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors flex items-start gap-4 ${
                           selectedFlavor?.id === flavor.id
                             ? "border-red-500 bg-red-50"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                         onClick={() => setSelectedFlavor(flavor)}
                       >
-                        <div className="flex justify-between items-start">
+                        {flavor.imageUrl ? (
+                            <img src={`http://localhost:8090${flavor.imageUrl}`} alt={flavor.name} className="w-20 h-20 rounded-md object-cover flex-shrink-0" />
+                        ) : (
+                            <div className="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
+                                <Pizza className="h-8 w-8" />
+                            </div>
+                        )}
+                        <div className="flex-1 flex justify-between items-start">
                           <div>
                             <h3 className="font-semibold text-gray-900">
                               {flavor.name}
@@ -150,7 +157,7 @@ export const PizzaCustomization = () => {
                               {flavor.description}
                             </p>
                           </div>
-                          <Badge variant="secondary">
+                          <Badge variant="secondary" className="flex-shrink-0 ml-2">
                             {flavor.price === 0
                               ? "Incluso"
                               : `+${formatPrice(flavor.price)}`}

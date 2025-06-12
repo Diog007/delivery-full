@@ -2,13 +2,16 @@ package com.pizzadelivery.backend.service;
 
 import com.pizzadelivery.backend.dto.OrderDtos;
 import com.pizzadelivery.backend.entity.*;
+import com.pizzadelivery.backend.enums.DeliveryType;
 import com.pizzadelivery.backend.enums.OrderStatus;
 import com.pizzadelivery.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,7 @@ public class OrderService {
     private final PizzaFlavorRepository pizzaFlavorRepository;
     private final PizzaExtraRepository pizzaExtraRepository;
     private final CustomerUserRepository customerUserRepository;
+    private final AddressRepository addressRepository;
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -44,9 +48,6 @@ public class OrderService {
 
             List<PizzaExtra> extras = pizzaExtraRepository.findAllById(itemDto.extraIds());
 
-            // AQUI poderíamos recalcular o preço para segurança máxima, mas manteremos o do frontend por simplicidade.
-            // double calculatedPrice = (pizzaType.getBasePrice() + flavor.getPrice() + extras.stream().mapToDouble(PizzaExtra::getPrice).sum()) * itemDto.quantity();
-
             return OrderItem.builder()
                     .pizzaType(pizzaType)
                     .flavor(flavor)
@@ -63,14 +64,39 @@ public class OrderService {
                 .deliveryType(orderDto.deliveryType())
                 .deliveryAddress(orderDto.deliveryAddress())
                 .payment(orderDto.payment())
-                .status(orderDto.status())
-                .createdAt(orderDto.createdAt())
-                .estimatedDeliveryTime(orderDto.estimatedDeliveryTime())
+                .status(OrderStatus.RECEIVED)
+                .createdAt(LocalDateTime.now())
+                .estimatedDeliveryTime(LocalDateTime.now().plusMinutes(45))
                 .totalAmount(orderDto.totalAmount())
                 .observations(orderDto.observations())
                 .build();
 
+        if (orderDto.deliveryType() == DeliveryType.DELIVERY && orderDto.deliveryAddress() != null) {
+            saveAddressForCustomer(customer, orderDto.deliveryAddress());
+        }
+
         return orderRepository.save(order);
+    }
+
+    private void saveAddressForCustomer(CustomerUser customer, DeliveryAddress deliveryAddress) {
+        boolean addressExists = customer.getAddresses().stream().anyMatch(existingAddress ->
+                Objects.equals(existingAddress.getZipCode(), deliveryAddress.getZipCode()) &&
+                        Objects.equals(existingAddress.getStreet(), deliveryAddress.getStreet()) &&
+                        Objects.equals(existingAddress.getNumber(), deliveryAddress.getNumber())
+        );
+
+        if (!addressExists) {
+            Address newAddress = Address.builder()
+                    .street(deliveryAddress.getStreet())
+                    .number(deliveryAddress.getNumber())
+                    .complement(deliveryAddress.getComplement())
+                    .neighborhood(deliveryAddress.getNeighborhood())
+                    .city(deliveryAddress.getCity())
+                    .zipCode(deliveryAddress.getZipCode())
+                    .customer(customer)
+                    .build();
+            addressRepository.save(newAddress);
+        }
     }
 
     @Transactional

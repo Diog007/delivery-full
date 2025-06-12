@@ -21,4 +21,6 @@ public class PizzaType {
     private String name;
     private String description;
     private double basePrice;
+    private String imageUrl;
+
 }

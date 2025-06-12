@@ -9,6 +9,7 @@ import com.pizzadelivery.backend.repository.PizzaTypeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,6 +20,8 @@ public class MenuService {
     private final PizzaTypeRepository pizzaTypeRepo;
     private final PizzaFlavorRepository pizzaFlavorRepo;
     private final PizzaExtraRepository pizzaExtraRepo;
+    private final FileStorageService fileStorageService;
+
 
     public List<PizzaType> getAllTypes() { return pizzaTypeRepo.findAll(); }
     public List<PizzaFlavor> getAllFlavors() { return pizzaFlavorRepo.findAll(); }
@@ -33,6 +36,19 @@ public class MenuService {
         type.setName(typeDetails.getName());
         type.setDescription(typeDetails.getDescription());
         type.setBasePrice(typeDetails.getBasePrice());
+        // A imagem não é atualizada aqui, e sim em um endpoint separado
+        return pizzaTypeRepo.save(type);
+    }
+
+    // --- ADICIONE O NOVO MÉTODO ABAIXO ---
+    @Transactional
+    public PizzaType savePizzaTypeImage(String typeId, MultipartFile file) {
+        PizzaType type = pizzaTypeRepo.findById(typeId)
+                .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado com o id: " + typeId));
+
+        String imageUrl = fileStorageService.storeFile(file);
+        type.setImageUrl(imageUrl);
+
         return pizzaTypeRepo.save(type);
     }
 
@@ -55,6 +71,17 @@ public class MenuService {
         flavor.setDescription(flavorDetails.getDescription());
         flavor.setPrice(flavorDetails.getPrice());
         flavor.setPizzaType(type);
+        return pizzaFlavorRepo.save(flavor);
+    }
+
+    @Transactional
+    public PizzaFlavor saveFlavorImage(String flavorId, MultipartFile file) {
+        PizzaFlavor flavor = pizzaFlavorRepo.findById(flavorId)
+                .orElseThrow(() -> new RuntimeException("Sabor não encontrado com o id: " + flavorId));
+
+        String imageUrl = fileStorageService.storeFile(file);
+        flavor.setImageUrl(imageUrl);
+
         return pizzaFlavorRepo.save(flavor);
     }
 

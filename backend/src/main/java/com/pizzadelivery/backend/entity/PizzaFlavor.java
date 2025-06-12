@@ -17,7 +17,11 @@ public class PizzaFlavor {
     private String id;
     private String name;
     private String description;
+
     @ManyToOne
     private PizzaType pizzaType;
+
     private double price;
+
+    private String imageUrl;
 }

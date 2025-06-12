@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/orders/{id}").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
+                        .requestMatchers("/images/**").permitAll()
+
                         // Endpoints de Admin (requerem token de admin)
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
