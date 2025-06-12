@@ -33,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
         adminRepo.save(Admin.builder()
                 .name("Administrador do Sistema")
                 .username("admin")
-                .password(passwordEncoder.encode("admin123"))
+                .password(passwordEncoder.encode("123456789teste"))
                 .build());
 
         // Pizza Types

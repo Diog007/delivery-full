@@ -11,20 +11,20 @@ export const OrderStatusBadge = ({
   className,
 }: OrderStatusBadgeProps) => {
   const getStatusConfig = (status: OrderStatus) => {
-    // REFACTOR: O switch agora usa os valores do Enum em maiúsculas
+    // REFACTOR: O switch agora usa os valores do Enum e retorna cores distintas
     switch (status) {
       case "RECEIVED":
-        return { label: "Recebido", className: "bg-blue-100 text-blue-800" };
+        return { label: "Recebido", className: "bg-blue-100 text-blue-800 border-blue-200" };
       case "PREPARING":
-        return { label: "Em Preparo", className: "bg-yellow-100 text-yellow-800" };
+        return { label: "Em Preparo", className: "bg-orange-100 text-orange-800 border-orange-200" };
       case "OUT_FOR_DELIVERY":
-        return { label: "Saiu para Entrega", className: "bg-purple-100 text-purple-800" };
+        return { label: "Saiu para Entrega", className: "bg-purple-100 text-purple-800 border-purple-200" };
       case "COMPLETED":
-        return { label: "Finalizado", className: "bg-green-100 text-green-800" };
+        return { label: "Finalizado", className: "bg-green-100 text-green-800 border-green-200" };
       case "CANCELLED":
-        return { label: "Cancelado", className: "bg-red-100 text-red-800" };
+        return { label: "Cancelado", className: "bg-red-100 text-red-800 border-red-200" };
       default:
-        return { label: "Desconhecido", className: "bg-gray-100 text-gray-800" };
+        return { label: "Desconhecido", className: "bg-gray-100 text-gray-800 border-gray-200" };
     }
   };
 
@@ -32,7 +32,7 @@ export const OrderStatusBadge = ({
 
   return (
     <Badge
-      variant="secondary"
+      variant="outline" // Usamos outline para que a borda colorida apareça
       className={`${config.className} ${className}`}
     >
       {config.label}
