@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,7 +13,6 @@ import { PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust } from "@/types";
 import { api } from "@/services/apiService";
 import { Checkbox } from "@/components/ui/checkbox";
 
-// Helper para formatar preços em Reais
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -22,7 +20,6 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-// --- Componente de Diálogo para Tipos de Pizza ---
 const TypeDialog = ({ open, setOpen, editingItem, onSave, pizzaExtras, pizzaCrusts }) => {
     const [formData, setFormData] = useState({ name: "", description: "", basePrice: 0 });
     const [selectedExtraIds, setSelectedExtraIds] = useState<Set<string>>(new Set());
@@ -112,32 +109,41 @@ const TypeDialog = ({ open, setOpen, editingItem, onSave, pizzaExtras, pizzaCrus
     );
 };
   
-// --- Componente de Diálogo para Sabores de Pizza ---
 const FlavorDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
-    const [formData, setFormData] = useState({ name: "", description: "", price: 0, pizzaTypeId: "" });
+    const [formData, setFormData] = useState({ name: "", description: "", price: 0 });
+    const [selectedTypeIds, setSelectedTypeIds] = useState<Set<string>>(new Set());
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
   
     useEffect(() => {
       if (open) {
         if (editingItem) {
-          setFormData({ ...editingItem, pizzaTypeId: editingItem.pizzaType.id });
+          setFormData({ name: editingItem.name, description: editingItem.description, price: editingItem.price });
+          setSelectedTypeIds(new Set(editingItem.pizzaTypes?.map((pt) => pt.id) || []));
         } else {
-          setFormData({ name: "", description: "", price: 0, pizzaTypeId: pizzaTypes[0]?.id || "" });
+          setFormData({ name: "", description: "", price: 0 });
+          setSelectedTypeIds(new Set());
         }
         setImageFile(null);
       }
-    }, [editingItem, open, pizzaTypes]);
+    }, [editingItem, open]);
+  
+    const handleTypeChange = (typeId: string, checked: boolean) => {
+      setSelectedTypeIds((prev) => {
+        const newSet = new Set(prev);
+        if (checked) newSet.add(typeId);
+        else newSet.delete(typeId);
+        return newSet;
+      });
+    };
   
     const handleSubmit = async (e) => {
       e.preventDefault();
       setIsLoading(true);
       
       const payload = {
-          name: formData.name,
-          description: formData.description,
-          price: formData.price,
-          pizzaType: { id: formData.pizzaTypeId }
+          ...formData,
+          pizzaTypeIds: Array.from(selectedTypeIds)
       };
   
       try {
@@ -163,27 +169,39 @@ const FlavorDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
   
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-              <DialogHeader><DialogTitle>{editingItem ? "Editar Sabor" : "Novo Sabor"}</DialogTitle></DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                  <div><Label htmlFor="flavorName">Nome do Sabor</Label><Input id="flavorName" value={formData.name} onChange={(e) => setFormData(p => ({...p, name: e.target.value}))} required /></div>
-                  <div><Label htmlFor="flavorDescription">Descrição</Label><Textarea id="flavorDescription" value={formData.description} onChange={(e) => setFormData(p => ({...p, description: e.target.value}))} required /></div>
-                  <div><Label htmlFor="typeId">Tipo de Pizza</Label>
-                      <Select value={formData.pizzaTypeId} onValueChange={(value) => setFormData(p => ({...p, pizzaTypeId: value}))} required>
-                          <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
-                          <SelectContent>{pizzaTypes.map((type) => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent>
-                      </Select>
-                  </div>
-                  <div><Label htmlFor="flavorPrice">Preço Adicional (R$)</Label><Input id="flavorPrice" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData(p => ({...p, price: parseFloat(e.target.value) || 0}))} required /></div>
-                  <div><Label htmlFor="image">Imagem do Sabor</Label><Input id="image" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} /></div>
-                  <div className="flex justify-end space-x-2"><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancelar</Button><Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar'}</Button></div>
-              </form>
-          </DialogContent>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editingItem ? "Editar Sabor" : "Novo Sabor"}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
+            <div><Label htmlFor="flavorName">Nome do Sabor</Label><Input id="flavorName" value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} required /></div>
+            <div><Label htmlFor="flavorDescription">Descrição</Label><Textarea id="flavorDescription" value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} required /></div>
+            
+            <div>
+              <Label>Disponível nos Tipos de Pizza</Label>
+              <Card className="p-3 mt-2 max-h-48 overflow-y-auto">
+                <div className="space-y-2">
+                  {pizzaTypes.map(type => (
+                    <div key={type.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`flavor-type-${type.id}`}
+                        checked={selectedTypeIds.has(type.id)}
+                        onCheckedChange={checked => handleTypeChange(type.id, !!checked)}
+                      />
+                      <Label htmlFor={`flavor-type-${type.id}`} className="font-normal cursor-pointer">{type.name}</Label>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            <div><Label htmlFor="flavorPrice">Preço Adicional (R$)</Label><Input id="flavorPrice" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))} required /></div>
+            <div><Label htmlFor="image">Imagem do Sabor</Label><Input id="image" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} /></div>
+            <div className="flex justify-end space-x-2 pt-4"><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancelar</Button><Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar'}</Button></div>
+          </form>
+        </DialogContent>
       </Dialog>
     );
 };
   
-// --- Componente de Diálogo para Adicionais ---
 const ExtraDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
     const [formData, setFormData] = useState({ name: "", description: "", price: 0 });
     const [selectedTypeIds, setSelectedTypeIds] = useState<Set<string>>(new Set());
@@ -244,7 +262,6 @@ const ExtraDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
     );
 };
 
-// --- Componente de Diálogo para Bordas ---
 const CrustDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
     const [formData, setFormData] = useState({ name: "", description: "", price: 0 });
     const [selectedTypeIds, setSelectedTypeIds] = useState<Set<string>>(new Set());
@@ -407,7 +424,10 @@ export const MenuManagement = () => {
                             <div key={item.id} className="flex items-center p-4 border rounded-lg">
                               {item.imageUrl ? (<img src={`http://localhost:8090${item.imageUrl}`} alt={item.name} className="w-20 h-20 rounded-md object-cover mr-4" />) : (<div className="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 mr-4 flex-shrink-0"><Star className="h-8 w-8" /></div>)}
                               <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-1"><h3 className="font-semibold">{item.name}</h3><Badge variant="outline">{item.pizzaType?.name}</Badge></div>
+                                <div className="flex items-center flex-wrap gap-2 mb-1">
+                                    <h3 className="font-semibold">{item.name}</h3>
+                                    {item.pizzaTypes?.map(pt => <Badge key={pt.id} variant="outline">{pt.name}</Badge>)}
+                                </div>
                                 <p className="text-sm text-gray-600">{item.description}</p>
                                 <Badge variant="secondary" className="mt-2">{item.price === 0 ? "Incluso" : `+${formatPrice(item.price)}`}</Badge>
                               </div>

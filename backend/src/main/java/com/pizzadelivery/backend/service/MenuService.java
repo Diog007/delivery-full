@@ -26,14 +26,14 @@ public class MenuService {
     private final PizzaTypeRepository pizzaTypeRepo;
     private final PizzaFlavorRepository pizzaFlavorRepo;
     private final PizzaExtraRepository pizzaExtraRepo;
-    private final PizzaCrustRepository pizzaCrustRepo; // --- CÓDIGO NOVO ---
+    private final PizzaCrustRepository pizzaCrustRepo;
     private final FileStorageService fileStorageService;
 
 
     public List<PizzaType> getAllTypes() { return pizzaTypeRepo.findAll(); }
     public List<PizzaFlavor> getAllFlavors() { return pizzaFlavorRepo.findAll(); }
     public List<PizzaExtra> getAllExtras() { return pizzaExtraRepo.findAll(); }
-    public List<PizzaCrust> getAllCrusts() { return pizzaCrustRepo.findAll(); } // --- CÓDIGO NOVO ---
+    public List<PizzaCrust> getAllCrusts() { return pizzaCrustRepo.findAll(); }
 
     @Transactional
     public PizzaType saveType(PizzaType type) {
@@ -45,7 +45,6 @@ public class MenuService {
             type.setAvailableExtras(Collections.emptyList());
         }
 
-        // --- LÓGICA NOVA PARA BORDAS ---
         if (type.getAvailableCrusts() != null && !type.getAvailableCrusts().isEmpty()) {
             List<String> crustIds = type.getAvailableCrusts().stream().map(PizzaCrust::getId).collect(Collectors.toList());
             List<PizzaCrust> crusts = pizzaCrustRepo.findAllById(crustIds);
@@ -72,7 +71,6 @@ public class MenuService {
             type.setAvailableExtras(Collections.emptyList());
         }
 
-        // --- LÓGICA NOVA PARA BORDAS ---
         if (typeDetails.getAvailableCrusts() != null) {
             List<String> crustIds = typeDetails.getAvailableCrusts().stream().map(PizzaCrust::getId).collect(Collectors.toList());
             List<PizzaCrust> crusts = pizzaCrustRepo.findAllById(crustIds);
@@ -103,7 +101,6 @@ public class MenuService {
         return new ArrayList<>(type.getAvailableExtras());
     }
 
-    // --- NOVO MÉTODO ---
     @Transactional
     public List<PizzaCrust> getCrustsByTypeId(String typeId) {
         PizzaType type = pizzaTypeRepo.findById(typeId)
@@ -113,22 +110,29 @@ public class MenuService {
 
     // --- MÉTODOS DE SABORES ---
     @Transactional
-    public PizzaFlavor saveFlavor(PizzaFlavor flavor) {
-        PizzaType type = pizzaTypeRepo.findById(flavor.getPizzaType().getId())
-                .orElseThrow(() -> new RuntimeException("PizzaType not found for flavor"));
-        flavor.setPizzaType(type);
-        return pizzaFlavorRepo.save(flavor);
+    public PizzaFlavor saveFlavor(MenuDtos.FlavorUpdateRequest dto) {
+        List<PizzaType> typesToAssociate = pizzaTypeRepo.findAllById(dto.pizzaTypeIds());
+        PizzaFlavor newFlavor = PizzaFlavor.builder()
+                .name(dto.name())
+                .description(dto.description())
+                .price(dto.price())
+                .pizzaTypes(typesToAssociate)
+                .build();
+        return pizzaFlavorRepo.save(newFlavor);
     }
 
     @Transactional
-    public PizzaFlavor updateFlavor(String id, PizzaFlavor flavorDetails) {
-        PizzaFlavor flavor = pizzaFlavorRepo.findById(id).orElseThrow(() -> new RuntimeException("PizzaFlavor not found"));
-        PizzaType type = pizzaTypeRepo.findById(flavorDetails.getPizzaType().getId())
-                .orElseThrow(() -> new RuntimeException("PizzaType not found for flavor update"));
-        flavor.setName(flavorDetails.getName());
-        flavor.setDescription(flavorDetails.getDescription());
-        flavor.setPrice(flavorDetails.getPrice());
-        flavor.setPizzaType(type);
+    public PizzaFlavor updateFlavor(String id, MenuDtos.FlavorUpdateRequest dto) {
+        PizzaFlavor flavor = pizzaFlavorRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("PizzaFlavor not found"));
+
+        List<PizzaType> typesToAssociate = pizzaTypeRepo.findAllById(dto.pizzaTypeIds());
+
+        flavor.setName(dto.name());
+        flavor.setDescription(dto.description());
+        flavor.setPrice(dto.price());
+        flavor.setPizzaTypes(typesToAssociate);
+
         return pizzaFlavorRepo.save(flavor);
     }
 
@@ -197,7 +201,7 @@ public class MenuService {
         pizzaExtraRepo.deleteById(id);
     }
 
-    // --- NOVOS MÉTODOS PARA BORDAS ---
+    // --- MÉTODOS PARA BORDAS ---
     @Transactional
     public PizzaCrust saveCrust(MenuDtos.CrustUpdateRequest dto) {
         PizzaCrust newCrust = PizzaCrust.builder()

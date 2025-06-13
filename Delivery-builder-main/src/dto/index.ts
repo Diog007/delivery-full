@@ -5,7 +5,7 @@ export namespace OrderDtos {
     pizzaTypeId: string;
     flavorId: string;
     extraIds: string[];
-    crustId: string | null; // --- LINHA NOVA ---
+    crustId: string | null;
     observations: string;
     quantity: number;
     totalPrice: number;
@@ -65,8 +65,14 @@ export namespace MenuDtos {
         pizzaTypeIds: string[];
     }
     
-    // --- NOVO DTO ---
     export interface CrustUpdateRequest {
+        name: string;
+        description: string;
+        price: number;
+        pizzaTypeIds: string[];
+    }
+    
+    export interface FlavorUpdateRequest {
         name: string;
         description: string;
         price: number;

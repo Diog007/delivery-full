@@ -8,7 +8,6 @@ export type OrderStatus =
 export type DeliveryType = "DELIVERY" | "PICKUP";
 export type PaymentMethod = "CASH" | "CARD";
 
-// --- NOVA INTERFACE ---
 export interface PizzaCrust {
   id: string;
   name: string;
@@ -23,14 +22,14 @@ export interface PizzaType {
   basePrice: number;
   imageUrl?: string;
   availableExtras?: PizzaExtra[];
-  availableCrusts?: PizzaCrust[]; // --- LINHA NOVA ---
+  availableCrusts?: PizzaCrust[];
 }
 
 export interface PizzaFlavor {
   id: string;
   name: string;
   description: string;
-  pizzaType: PizzaType;
+  pizzaTypes: PizzaType[];
   price: number;
   imageUrl?: string;
 }
@@ -46,7 +45,7 @@ export interface CartItem {
   id: string;
   pizzaType: PizzaType;
   flavor: PizzaFlavor;
-  crust: PizzaCrust | null; // --- LINHA MODIFICADA ---
+  crust: PizzaCrust | null;
   extras: PizzaExtra[];
   observations: string;
   quantity: number;

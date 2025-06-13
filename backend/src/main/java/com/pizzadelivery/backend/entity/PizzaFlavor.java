@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,10 +20,14 @@ public class PizzaFlavor {
     private String name;
     private String description;
 
-    @ManyToOne
-    private PizzaType pizzaType;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "flavor_pizzatypes",
+            joinColumns = @JoinColumn(name = "flavor_id"),
+            inverseJoinColumns = @JoinColumn(name = "pizzatype_id")
+    )
+    private List<PizzaType> pizzaTypes;
 
     private double price;
-
     private String imageUrl;
 }

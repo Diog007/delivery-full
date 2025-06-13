@@ -22,10 +22,10 @@ export const PizzaCustomization = () => {
 
   const [flavors, setFlavors] = useState<PizzaFlavor[]>([]);
   const [extras, setExtras] = useState<PizzaExtra[]>([]);
-  const [crusts, setCrusts] = useState<PizzaCrust[]>([]); // Estado para bordas
+  const [crusts, setCrusts] = useState<PizzaCrust[]>([]);
   
   const [selectedFlavor, setSelectedFlavor] = useState<PizzaFlavor | null>(null);
-  const [selectedCrust, setSelectedCrust] = useState<PizzaCrust | null>(null); // Estado para borda selecionada
+  const [selectedCrust, setSelectedCrust] = useState<PizzaCrust | null>(null);
   const [selectedExtras, setSelectedExtras] = useState<PizzaExtra[]>([]);
   const [observations, setObservations] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -41,11 +41,11 @@ export const PizzaCustomization = () => {
         const [allFlavors, extrasForType, crustsForType] = await Promise.all([
             api.public.getPizzaFlavors(),
             api.public.getExtrasForType(pizzaType.id),
-            api.public.getCrustsForType(pizzaType.id) // Busca as bordas
+            api.public.getCrustsForType(pizzaType.id)
         ]);
         
         const flavorsForType = Array.isArray(allFlavors) 
-          ? allFlavors.filter(flavor => flavor.pizzaType?.id === pizzaType.id) 
+          ? allFlavors.filter(flavor => flavor.pizzaTypes.some(pt => pt.id === pizzaType.id)) 
           : [];
 
         setFlavors(flavorsForType);
@@ -157,7 +157,6 @@ export const PizzaCustomization = () => {
                 </CardContent>
               </Card>
 
-              {/* --- NOVA SEÇÃO DE BORDAS --- */}
               <Card>
                 <CardHeader>
                   <CardTitle>2. Escolha a Borda (Opcional)</CardTitle>

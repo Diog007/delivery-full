@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/admin") // Este prefixo protege todos os endpoints abaixo
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class AdminController {
 
@@ -26,7 +26,6 @@ public class AdminController {
     private final MenuService menuService;
     private final CustomerService customerService;
 
-    // --- ENDPOINTS DO DASHBOARD (ADICIONADOS) ---
     @GetMapping("/dashboard/stats")
     public ResponseEntity<DashboardDtos.DashboardStats> getDashboardStats() {
         return ResponseEntity.ok(dashboardService.getDashboardStats());
@@ -42,7 +41,6 @@ public class AdminController {
         return ResponseEntity.ok(dashboardService.getSalesByPizzaTypeChartData());
     }
 
-    // --- ENDPOINTS DE PEDIDOS (ADICIONADOS) ---
     @GetMapping("/orders")
     public ResponseEntity<List<ResponseDtos.OrderResponseDto>> getAllOrders() {
         List<Order> orders = orderService.getAllOrders();
@@ -60,7 +58,6 @@ public class AdminController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // --- ENDPOINTS DE CLIENTES (ADICIONADOS) ---
     @GetMapping("/customers")
     public ResponseEntity<List<CustomerDtos.CustomerResponseDto>> getAllCustomers() {
         return ResponseEntity.ok(customerService.getAllCustomers());
@@ -88,9 +85,6 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-
-    // --- Endpoints de Gerenciamento de Cardápio (JÁ EXISTENTES E FUNCIONAIS) ---
-
     // --- TIPOS ---
     @PostMapping("/types")
     public ResponseEntity<PizzaType> createType(@RequestBody PizzaType type) {
@@ -112,12 +106,12 @@ public class AdminController {
 
     // --- SABORES ---
     @PostMapping("/flavors")
-    public ResponseEntity<PizzaFlavor> createFlavor(@RequestBody PizzaFlavor flavor) {
-        return new ResponseEntity<>(menuService.saveFlavor(flavor), HttpStatus.CREATED);
+    public ResponseEntity<PizzaFlavor> createFlavor(@RequestBody MenuDtos.FlavorUpdateRequest flavorDto) {
+        return new ResponseEntity<>(menuService.saveFlavor(flavorDto), HttpStatus.CREATED);
     }
     @PutMapping("/flavors/{id}")
-    public ResponseEntity<PizzaFlavor> updateFlavor(@PathVariable String id, @RequestBody PizzaFlavor flavor) {
-        return ResponseEntity.ok(menuService.updateFlavor(id, flavor));
+    public ResponseEntity<PizzaFlavor> updateFlavor(@PathVariable String id, @RequestBody MenuDtos.FlavorUpdateRequest flavorDto) {
+        return ResponseEntity.ok(menuService.updateFlavor(id, flavorDto));
     }
     @PostMapping("/flavors/{id}/image")
     public ResponseEntity<PizzaFlavor> uploadFlavorImage(@PathVariable String id, @RequestParam("file") MultipartFile file) {

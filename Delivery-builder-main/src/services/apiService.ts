@@ -46,7 +46,6 @@ const publicApi = {
   getPizzaExtras: () => baseRequest<PizzaExtra[]>('/menu/extras'),
   getExtrasForType: (typeId: string) => baseRequest<PizzaExtra[]>(`/menu/types/${typeId}/extras`),
   getOrderById: (id: string) => baseRequest<Order>(`/orders/${id}`),
-  // --- NOVOS MÉTODOS ---
   getAllCrusts: () => baseRequest<PizzaCrust[]>('/menu/crusts'),
   getCrustsForType: (typeId: string) => baseRequest<PizzaCrust[]>(`/menu/types/${typeId}/crusts`),
 };
@@ -75,8 +74,8 @@ const adminApi = {
   },
   deletePizzaType: (id: string) => baseRequest<void>(`/admin/types/${id}`, { method: 'DELETE' }),
   
-  createPizzaFlavor: (data: Partial<PizzaFlavor>) => baseRequest<PizzaFlavor>('/admin/flavors', { method: 'POST', body: JSON.stringify(data) }),
-  updatePizzaFlavor: (id: string, data: Partial<PizzaFlavor>) => baseRequest<PizzaFlavor>(`/admin/flavors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  createPizzaFlavor: (data: MenuDtos.FlavorUpdateRequest) => baseRequest<PizzaFlavor>('/admin/flavors', { method: 'POST', body: JSON.stringify(data) }),
+  updatePizzaFlavor: (id: string, data: MenuDtos.FlavorUpdateRequest) => baseRequest<PizzaFlavor>(`/admin/flavors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   uploadFlavorImage: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -88,7 +87,6 @@ const adminApi = {
   updatePizzaExtra: (id: string, data: MenuDtos.ExtraUpdateRequest) => baseRequest<PizzaExtra>(`/admin/extras/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deletePizzaExtra: (id: string) => baseRequest<void>(`/admin/extras/${id}`, { method: 'DELETE' }),
 
-  // --- NOVOS MÉTODOS ---
   createPizzaCrust: (data: MenuDtos.CrustUpdateRequest) => baseRequest<PizzaCrust>('/admin/crusts', { method: 'POST', body: JSON.stringify(data) }),
   updatePizzaCrust: (id: string, data: MenuDtos.CrustUpdateRequest) => baseRequest<PizzaCrust>(`/admin/crusts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deletePizzaCrust: (id: string) => baseRequest<void>(`/admin/crusts/${id}`, { method: 'DELETE' }),
