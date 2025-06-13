@@ -34,5 +34,10 @@ public class MenuController {
     public ResponseEntity<List<PizzaExtra>> getAllExtras() {
         return ResponseEntity.ok(menuService.getAllExtras());
     }
-}
 
+    // --- NOVO ENDPOINT ---
+    @GetMapping("/types/{typeId}/extras")
+    public ResponseEntity<List<PizzaExtra>> getExtrasForType(@PathVariable String typeId) {
+        return ResponseEntity.ok(menuService.getExtrasByTypeId(typeId));
+    }
+}

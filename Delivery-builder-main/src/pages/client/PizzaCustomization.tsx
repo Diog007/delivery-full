@@ -34,15 +34,18 @@ export const PizzaCustomization = () => {
 
     const fetchData = async () => {
       try {
-        const allFlavors = await api.public.getPizzaFlavors();
-        const extrasData = await api.public.getPizzaExtras();
+        // --- LÓGICA ATUALIZADA ---
+        const [allFlavors, extrasForType] = await Promise.all([
+            api.public.getPizzaFlavors(),
+            api.public.getExtrasForType(pizzaType.id) // Busca apenas os extras para o tipo de pizza
+        ]);
         
         const flavorsForType = Array.isArray(allFlavors) 
           ? allFlavors.filter(flavor => flavor.pizzaType?.id === pizzaType.id) 
           : [];
 
         setFlavors(flavorsForType);
-        setExtras(Array.isArray(extrasData) ? extrasData : []);
+        setExtras(Array.isArray(extrasForType) ? extrasForType : []); // Define os extras específicos do tipo
 
         if (flavorsForType.length > 0) {
           setSelectedFlavor(flavorsForType[0]);
@@ -54,7 +57,8 @@ export const PizzaCustomization = () => {
 
     fetchData();
   }, [pizzaType, navigate]);
-
+  
+  // ... O restante do arquivo permanece igual
   const handleExtraToggle = (extra: PizzaExtra, checked: boolean) => {
     if (checked) {
       setSelectedExtras((prev) => [...prev, extra]);

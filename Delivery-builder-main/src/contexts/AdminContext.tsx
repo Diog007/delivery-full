@@ -59,36 +59,46 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     localStorage.removeItem("adminName");
   }, []);
 
-  const refreshDashboard = useCallback(async () => {
-    if (!localStorage.getItem("authToken")) return;
-    try {
-      const [stats, sales, types] = await Promise.all([
-        api.admin.getDashboardStats(),
-        api.admin.getWeeklySales(),
-        api.admin.getSalesByType()
-      ]);
-      
-      setDashboardStats(stats);
-      setWeeklySales(sales);
-      setSalesByType(types);
-
-    } catch (error) {
-      console.error("Falha ao atualizar dashboard:", error);
-      logout();
-    }
-  }, [logout]);
-
+  // Efeito 1: Apenas para restaurar a sessão a partir do localStorage.
+  // Roda apenas uma vez quando o componente é montado.
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const adminName = localStorage.getItem("adminName");
     if (token && adminName) {
       setAdmin({ id: '', username: '', name: adminName });
-      refreshDashboard();
     }
     setIsLoading(false);
-  }, [refreshDashboard]);
+  }, []); // A dependência vazia [] garante que rode apenas na montagem.
 
-  // --- FUNÇÃO LOGIN CORRIGIDA E COMPLETA ---
+  // Efeito 2: Para buscar os dados do dashboard.
+  // Roda sempre que o usuário for autenticado (no login ou no recarregamento da página).
+  useEffect(() => {
+    const refreshDashboardData = async () => {
+      // Se não estiver autenticado, não faz nada.
+      if (!isAuthenticated) return;
+
+      try {
+        const [stats, sales, types] = await Promise.all([
+          api.admin.getDashboardStats(),
+          api.admin.getWeeklySales(),
+          api.admin.getSalesByType()
+        ]);
+        
+        setDashboardStats(stats);
+        setWeeklySales(sales);
+        setSalesByType(types);
+
+      } catch (error) {
+        console.error("Falha ao carregar dados do dashboard:", error);
+        // Opcional: Adicionar um toast para notificar sobre o erro sem deslogar.
+        // Ex: toast({ title: "Erro de Rede", description: "Não foi possível carregar os dados do dashboard."})
+        // A chave aqui é NÃO chamar logout() para evitar deslogar o usuário por falhas de rede.
+      }
+    };
+
+    refreshDashboardData();
+  }, [isAuthenticated]); // A dependência [isAuthenticated] dispara o efeito quando o login muda.
+
   const login = useCallback(async (username, password): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -98,18 +108,35 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("adminName", response.name);
         setAdmin({ id: '', username, name: response.name });
-        await refreshDashboard();
-        return true; // Retorna true em caso de sucesso
+        // Os dados do dashboard serão carregados automaticamente pelo useEffect acima.
+        return true;
       }
-      return false; // Retorna false se a resposta não for a esperada
+      return false;
     } catch (error) {
       console.error("Falha no login de admin:", error);
       alert(`Falha no login: ${error.message}`);
-      return false; // Retorna false em caso de erro
+      return false;
     } finally {
       setIsLoading(false);
     }
-  }, [refreshDashboard]);
+  }, []);
+
+  // Função para o botão "Atualizar" no dashboard
+  const refreshDashboardManual = useCallback(async () => {
+     if (!isAuthenticated) return;
+     try {
+        const [stats, sales, types] = await Promise.all([
+          api.admin.getDashboardStats(),
+          api.admin.getWeeklySales(),
+          api.admin.getSalesByType()
+        ]);
+        setDashboardStats(stats);
+        setWeeklySales(sales);
+        setSalesByType(types);
+      } catch (error) {
+         console.error("Falha ao atualizar dashboard manualmente:", error);
+      }
+  }, [isAuthenticated]);
 
   const contextValue = useMemo(() => ({
     admin,
@@ -120,8 +147,8 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     isLoading,
     login,
     logout,
-    refreshDashboard,
-  }), [admin, isAuthenticated, dashboardStats, weeklySales, salesByType, isLoading, login, logout, refreshDashboard]);
+    refreshDashboard: refreshDashboardManual,
+  }), [admin, isAuthenticated, dashboardStats, weeklySales, salesByType, isLoading, login, logout, refreshDashboardManual]);
 
   return (
     <AdminContext.Provider value={contextValue}>

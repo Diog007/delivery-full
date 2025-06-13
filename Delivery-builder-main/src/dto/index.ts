@@ -55,3 +55,13 @@ export namespace CustomerDtos {
         password: string;
     }
 }
+
+// --- NAMESPACE ADICIONADO ---
+export namespace MenuDtos {
+    export interface ExtraUpdateRequest {
+        name: string;
+        description: string;
+        price: number;
+        pizzaTypeIds: string[];
+    }
+}

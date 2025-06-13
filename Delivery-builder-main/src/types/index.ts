@@ -14,6 +14,7 @@ export interface PizzaType {
   description: string;
   basePrice: number;
   imageUrl?: string;
+  availableExtras?: PizzaExtra[];
 }
 
 export interface PizzaFlavor {
@@ -121,4 +122,9 @@ export interface Customer {
   whatsapp: string;
   cpf: string;
   addresses: Address[];
+  // --- NOVOS CAMPOS ADICIONADOS ---
+  status?: 'active' | 'inactive'; // Status do cliente
+  totalOrders?: number;           // Total de pedidos feitos
+  totalSpent?: number;            // Total gasto pelo cliente
+  lastOrderDate?: string;         // Data do último pedido
 }

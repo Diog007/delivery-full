@@ -1,13 +1,12 @@
 package com.pizzadelivery.backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -23,4 +22,11 @@ public class PizzaType {
     private double basePrice;
     private String imageUrl;
 
+    @ManyToMany(fetch = FetchType.EAGER) // MODIFICADO DE LAZY PARA EAGER
+    @JoinTable(
+            name = "pizza_type_extras",
+            joinColumns = @JoinColumn(name = "pizza_type_id"),
+            inverseJoinColumns = @JoinColumn(name = "pizza_extra_id")
+    )
+    private List<PizzaExtra> availableExtras;
 }

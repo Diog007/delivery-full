@@ -2,6 +2,7 @@ package com.pizzadelivery.backend.controller;
 
 import com.pizzadelivery.backend.dto.CustomerDtos;
 import com.pizzadelivery.backend.dto.DashboardDtos;
+import com.pizzadelivery.backend.dto.MenuDtos;
 import com.pizzadelivery.backend.dto.OrderDtos;
 import com.pizzadelivery.backend.dto.ResponseDtos;
 import com.pizzadelivery.backend.entity.Order;
@@ -122,14 +123,17 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    // --- Endpoints de Adicionais CORRIGIDOS ---
     @PostMapping("/extras")
-    public ResponseEntity<PizzaExtra> createExtra(@RequestBody PizzaExtra extra) {
+    public ResponseEntity<PizzaExtra> createExtra(@RequestBody MenuDtos.ExtraUpdateRequest extra) {
         return new ResponseEntity<>(menuService.saveExtra(extra), HttpStatus.CREATED);
     }
+
     @PutMapping("/extras/{id}")
-    public ResponseEntity<PizzaExtra> updateExtra(@PathVariable String id, @RequestBody PizzaExtra extra) {
+    public ResponseEntity<PizzaExtra> updateExtra(@PathVariable String id, @RequestBody MenuDtos.ExtraUpdateRequest extra) {
         return ResponseEntity.ok(menuService.updateExtra(id, extra));
     }
+
     @DeleteMapping("/extras/{id}")
     public ResponseEntity<Void> deleteExtra(@PathVariable String id) {
         menuService.deleteExtra(id);
