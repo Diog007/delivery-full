@@ -44,7 +44,7 @@ export interface PizzaExtra {
 export interface CartItem {
   id: string;
   pizzaType: PizzaType;
-  flavor: PizzaFlavor;
+  flavors: PizzaFlavor[]; // MODIFICADO DE flavor PARA flavors
   crust: PizzaCrust | null;
   extras: PizzaExtra[];
   observations: string;

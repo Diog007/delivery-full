@@ -3,7 +3,7 @@ import { DeliveryAddress, DeliveryType, OrderStatus, Payment } from "@/types";
 export namespace OrderDtos {
   export interface CartItemRequestDto {
     pizzaTypeId: string;
-    flavorId: string;
+    flavorIds: string[]; // MODIFICADO DE flavorId PARA flavorIds
     extraIds: string[];
     crustId: string | null;
     observations: string;

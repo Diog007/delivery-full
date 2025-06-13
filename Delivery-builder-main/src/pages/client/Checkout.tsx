@@ -26,7 +26,6 @@ export const Checkout = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
     
-    // Estados do Formulário
     const [deliveryType, setDeliveryType] = useState<DeliveryType>("DELIVERY");
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CARD");
     const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress>({ street: "", number: "", complement: "", neighborhood: "", city: "", zipCode: "" });
@@ -74,27 +73,27 @@ export const Checkout = () => {
 
         setIsLoading(true);
         try {
+            // --- CORREÇÃO PRINCIPAL AQUI ---
             const itemsForApi: OrderDtos.CartItemRequestDto[] = items.map(item => ({
                 pizzaTypeId: item.pizzaType.id,
-                flavorId: item.flavor.id,
+                flavorIds: item.flavors.map(flavor => flavor.id), // Corrigido para usar a lista de sabores
                 extraIds: item.extras.map(extra => extra.id),
+                crustId: item.crust?.id || null, // Adicionado crustId
                 observations: item.observations,
                 quantity: item.quantity,
                 totalPrice: item.totalPrice,
             }));
             
-            // --- ALTERAÇÃO PRINCIPAL AQUI ---
-            // Objeto de dados do pedido sem os campos 'createdAt' e 'estimatedDeliveryTime'.
-            // O backend agora é responsável por definir esses valores.
             const orderData: CreateOrderDto = {
                 items: itemsForApi,
                 deliveryType,
                 deliveryAddress: deliveryType === "DELIVERY" ? deliveryAddress : undefined,
-                payment: payment,
+                payment,
                 status: "RECEIVED",
                 totalAmount: finalTotal,
                 observations,
             };
+            // --- FIM DA CORREÇÃO ---
 
             const createdOrder = await api.customer.createOrder(orderData);
             if (createdOrder) {

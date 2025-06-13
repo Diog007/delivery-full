@@ -23,7 +23,7 @@ public class OrderService {
     private final PizzaTypeRepository pizzaTypeRepository;
     private final PizzaFlavorRepository pizzaFlavorRepository;
     private final PizzaExtraRepository pizzaExtraRepository;
-    private final PizzaCrustRepository pizzaCrustRepository; // --- CÓDIGO NOVO ---
+    private final PizzaCrustRepository pizzaCrustRepository;
     private final CustomerUserRepository customerUserRepository;
     private final AddressRepository addressRepository;
 
@@ -44,10 +44,13 @@ public class OrderService {
             PizzaType pizzaType = pizzaTypeRepository.findById(itemDto.pizzaTypeId())
                     .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado: " + itemDto.pizzaTypeId()));
 
-            PizzaFlavor flavor = pizzaFlavorRepository.findById(itemDto.flavorId())
-                    .orElseThrow(() -> new RuntimeException("Sabor não encontrado: " + itemDto.flavorId()));
+            // --- LÓGICA MODIFICADA ---
+            List<PizzaFlavor> flavors = pizzaFlavorRepository.findAllById(itemDto.flavorIds());
+            if (flavors.isEmpty()) {
+                throw new RuntimeException("Pelo menos um sabor deve ser selecionado.");
+            }
+            // --- FIM DA MODIFICAÇÃO ---
 
-            // --- LÓGICA ATUALIZADA ---
             PizzaCrust crust = null;
             if (itemDto.crustId() != null && !itemDto.crustId().isEmpty()) {
                 crust = pizzaCrustRepository.findById(itemDto.crustId())
@@ -58,9 +61,9 @@ public class OrderService {
 
             return OrderItem.builder()
                     .pizzaType(pizzaType)
-                    .flavor(flavor)
+                    .flavors(flavors) // MODIFICADO DE flavor PARA flavors
                     .extras(extras)
-                    .crust(crust) // --- CÓDIGO NOVO ---
+                    .crust(crust)
                     .observations(itemDto.observations())
                     .quantity(itemDto.quantity())
                     .totalPrice(itemDto.totalPrice())

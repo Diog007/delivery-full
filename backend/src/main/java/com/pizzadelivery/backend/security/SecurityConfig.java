@@ -38,17 +38,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // --- REGRAS PÚBLICAS ---
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Permite todas as requisições pre-flight
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/customer/auth/register", "/api/customer/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/menu/**", "/api/orders/{id}", "/images/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
-                        // --- CORREÇÃO PRINCIPAL AQUI ---
-                        // Garante que QUALQUER rota dentro de /api/admin/ seja protegida.
-                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        // --- REGRAS DE ADMIN ---
+                        // Usando hasRole("ADMIN") que espera a autoridade "ROLE_ADMIN"
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // --- REGRAS DE CLIENTE ---
-                        .requestMatchers("/api/customer/**").hasAuthority("ROLE_CUSTOMER")
-                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CUSTOMER")
+                        // Usando hasRole("CUSTOMER") que espera a autoridade "ROLE_CUSTOMER"
+                        .requestMatchers("/api/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
 
                         // Qualquer outra requisição precisa de autenticação
                         .anyRequest().authenticated()
@@ -72,7 +74,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite que o frontend em localhost:8080 acesse a API
         configuration.setAllowedOrigins(List.of("http://localhost:8080"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));

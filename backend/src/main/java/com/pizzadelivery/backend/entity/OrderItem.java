@@ -20,15 +20,21 @@ public class OrderItem {
     @ManyToOne
     private PizzaType pizzaType;
 
-    @ManyToOne
-    private PizzaFlavor flavor;
+    // --- CÓDIGO MODIFICADO ---
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "order_item_flavors",
+            joinColumns = @JoinColumn(name = "order_item_id"),
+            inverseJoinColumns = @JoinColumn(name = "flavor_id")
+    )
+    private List<PizzaFlavor> flavors;
+    // --- FIM DA MODIFICAÇÃO ---
 
     @ManyToMany(fetch = FetchType.EAGER)
     private List<PizzaExtra> extras;
 
-    // --- CÓDIGO NOVO ---
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "crust_id", nullable = true) // A borda é opcional
+    @JoinColumn(name = "crust_id", nullable = true)
     private PizzaCrust crust;
 
     private String observations;

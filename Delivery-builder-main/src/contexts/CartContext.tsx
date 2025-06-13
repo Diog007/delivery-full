@@ -5,7 +5,7 @@ interface CartContextType {
   items: CartItem[];
   addItem: (
     pizzaType: PizzaType,
-    flavor: PizzaFlavor,
+    flavors: PizzaFlavor[], // MODIFICADO
     crust: PizzaCrust | null,
     extras: PizzaExtra[],
     observations: string,
@@ -37,21 +37,26 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   const addItem = (
     pizzaType: PizzaType,
-    flavor: PizzaFlavor,
+    flavors: PizzaFlavor[], // MODIFICADO
     crust: PizzaCrust | null,
     extras: PizzaExtra[],
     observations: string,
     quantity: number,
   ) => {
+    // --- LÓGICA DE PREÇO ATUALIZADA ---
+    const highestFlavorPrice = flavors.length > 0
+        ? Math.max(...flavors.map(f => f.price))
+        : 0;
     const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
     const crustPrice = crust ? crust.price : 0;
-    const totalPrice =
-      (pizzaType.basePrice + flavor.price + extrasPrice + crustPrice) * quantity;
+    
+    const totalPrice = (pizzaType.basePrice + highestFlavorPrice + extrasPrice + crustPrice) * quantity;
+    // --- FIM DA LÓGICA DE PREÇO ---
 
     const newItem: CartItem = {
       id: Date.now().toString(),
       pizzaType,
-      flavor,
+      flavors, // MODIFICADO
       crust,
       extras,
       observations,

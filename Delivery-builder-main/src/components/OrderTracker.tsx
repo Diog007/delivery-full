@@ -7,53 +7,30 @@ import { OrderStatusBadge } from "./OrderStatusBadge";
 import { formatPrice } from "@/lib/utils";
 
 interface OrderTrackerProps {
-  order: Order | null | undefined; // Permite que a prop seja nula ou indefinida inicialmente
+  order: Order | null | undefined;
 }
 
 interface StatusStep {
   status: OrderStatus;
   label: string;
   description: string;
-  icon: React.ElementType; // Tipo mais genérico para componentes de ícone
+  icon: React.ElementType;
 }
 
 export const OrderTracker = ({ order }: OrderTrackerProps) => {
   const [timeElapsed, setTimeElapsed] = useState(0);
 
-  // Se o pedido não existir, não renderiza nada para evitar erros.
   if (!order) {
     return null; 
   }
 
-  // A definição dos passos agora está dentro do componente para acessar `order.deliveryType`
   const statusSteps: StatusStep[] = [
-    {
-      status: "RECEIVED",
-      label: "Pedido Recebido",
-      description: "Seu pedido foi confirmado e está na fila de preparo.",
-      icon: CheckCircle,
-    },
-    {
-      status: "PREPARING",
-      label: "Em Preparo",
-      description: "Nossos chefs estão preparando sua pizza com carinho.",
-      icon: Package,
-    },
-    {
-      status: "OUT_FOR_DELIVERY",
-      label: order.deliveryType === "DELIVERY" ? "Saiu para Entrega" : "Pronto para Retirada",
-      description: order.deliveryType === "DELIVERY" ? "Sua pizza está a caminho!" : "Sua pizza está pronta para retirada no balcão.",
-      icon: order.deliveryType === "DELIVERY" ? Truck : Package,
-    },
-    {
-      status: "COMPLETED",
-      label: "Finalizado",
-      description: order.deliveryType === "DELIVERY" ? "Pizza entregue com sucesso!" : "Pizza retirada com sucesso!",
-      icon: CheckCircle,
-    },
+    { status: "RECEIVED", label: "Pedido Recebido", description: "Seu pedido foi confirmado e está na fila de preparo.", icon: CheckCircle },
+    { status: "PREPARING", label: "Em Preparo", description: "Nossos chefs estão preparando sua pizza com carinho.", icon: Package },
+    { status: "OUT_FOR_DELIVERY", label: order.deliveryType === "DELIVERY" ? "Saiu para Entrega" : "Pronto para Retirada", description: order.deliveryType === "DELIVERY" ? "Sua pizza está a caminho!" : "Sua pizza está pronta para retirada no balcão.", icon: order.deliveryType === "DELIVERY" ? Truck : Package },
+    { status: "COMPLETED", label: "Finalizado", description: order.deliveryType === "DELIVERY" ? "Pizza entregue com sucesso!" : "Pizza retirada com sucesso!", icon: CheckCircle },
   ];
 
-  // O passo de cancelado é tratado separadamente
   const cancelledStep: StatusStep = {
       status: "CANCELLED",
       label: "Pedido Cancelado",
@@ -61,22 +38,18 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
       icon: XCircle,
   };
 
-
   useEffect(() => {
-    // Garante que o efeito só rode se tivermos uma data de criação
     if (!order.createdAt) return;
-
     const interval = setInterval(() => {
-      const createdAtDate = new Date(order.createdAt); // Converte string para Date
+      const createdAtDate = new Date(order.createdAt);
       const elapsed = Math.floor((Date.now() - createdAtDate.getTime()) / 1000 / 60);
       setTimeElapsed(elapsed > 0 ? elapsed : 0);
     }, 1000);
-
     return () => clearInterval(interval);
   }, [order.createdAt]);
 
   const getCurrentStepIndex = () => {
-    if (order.status === 'CANCELLED') return -1; // Não faz parte da progressão normal
+    if (order.status === 'CANCELLED') return -1;
     return statusSteps.findIndex((step) => step.status === order.status);
   };
 
@@ -93,7 +66,6 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
     const estimated = new Date(order.estimatedDeliveryTime);
     const diffMs = estimated.getTime() - now.getTime();
     if (diffMs <= 0) return "A qualquer momento";
-
     const diffMins = Math.ceil(diffMs / 1000 / 60);
     if (diffMins === 1) return "em 1 minuto";
     return `em ${diffMins} minutos`;
@@ -113,43 +85,22 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Pedido #{order.id.substring(0, 8)}</CardTitle>
-            <OrderStatusBadge status={order.status} />
-          </div>
-        </CardHeader>
+        <CardHeader><div className="flex justify-between items-center"><CardTitle>Pedido #{order.id.substring(0, 8)}</CardTitle><OrderStatusBadge status={order.status} /></div></CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Tempo decorrido:</p>
-              <p className="font-semibold">{formatTime(timeElapsed)}</p>
-            </div>
-            {estimatedTime && order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
-              <div>
-                <p className="text-sm text-gray-600">Previsão de finalização:</p>
-                <p className="font-semibold text-green-600">{estimatedTime}</p>
-              </div>
-            )}
+            <div><p className="text-sm text-gray-600">Tempo decorrido:</p><p className="font-semibold">{formatTime(timeElapsed)}</p></div>
+            {estimatedTime && order.status !== "COMPLETED" && order.status !== "CANCELLED" && (<div><p className="text-sm text-gray-600">Previsão de finalização:</p><p className="font-semibold text-green-600">{estimatedTime}</p></div>)}
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Clock className="h-5 w-5" />
-            <span>Acompanhamento do Pedido</span>
-          </CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="flex items-center space-x-2"><Clock className="h-5 w-5" /><span>Acompanhamento do Pedido</span></CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-6">
             {order.status !== 'CANCELLED' && (
                 <>
-                    <div>
-                        <Progress value={getProgress()} className="h-2" />
-                        <p className="text-sm text-gray-600 mt-2">{Math.round(getProgress())}% concluído</p>
-                    </div>
+                    <div><Progress value={getProgress()} className="h-2" /><p className="text-sm text-gray-600 mt-2">{Math.round(getProgress())}% concluído</p></div>
                     <div className="space-y-4">
                     {statusSteps.map((step, index) => {
                         const Icon = step.icon;
@@ -157,35 +108,19 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
                         const isCurrent = index === currentStepIndex;
                         return (
                         <div key={step.status} className={`flex items-start space-x-3 p-3 rounded-lg transition-colors ${ isCurrent ? "bg-blue-50 border border-blue-200" : isCompleted ? "bg-green-50" : "bg-gray-50"}`}>
-                            <div className={`flex-shrink-0 ${isCompleted ? "text-green-600" : "text-gray-400"}`}>
-                                <Icon className="h-6 w-6" />
-                            </div>
+                            <div className={`flex-shrink-0 ${isCompleted ? "text-green-600" : "text-gray-400"}`}><Icon className="h-6 w-6" /></div>
                             <div className="flex-1">
-                                <h4 className={`font-medium ${isCurrent ? "text-blue-900" : isCompleted ? "text-green-900" : "text-gray-600"}`}>
-                                    {step.label}
-                                </h4>
-                                <p className={`text-sm ${isCurrent ? "text-blue-700" : isCompleted ? "text-green-700" : "text-gray-500"}`}>
-                                    {step.description}
-                                </p>
+                                <h4 className={`font-medium ${isCurrent ? "text-blue-900" : isCompleted ? "text-green-900" : "text-gray-600"}`}>{step.label}</h4>
+                                <p className={`text-sm ${isCurrent ? "text-blue-700" : isCompleted ? "text-green-700" : "text-gray-500"}`}>{step.description}</p>
                             </div>
-                            {isCurrent && (
-                                <div className="flex-shrink-0"><div className="animate-pulse w-3 h-3 bg-blue-500 rounded-full"></div></div>
-                            )}
+                            {isCurrent && (<div className="flex-shrink-0"><div className="animate-pulse w-3 h-3 bg-blue-500 rounded-full"></div></div>)}
                         </div>
                         );
                     })}
                     </div>
                 </>
             )}
-            {order.status === 'CANCELLED' && (
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-red-50 text-red-800">
-                    <XCircle className="h-6 w-6" />
-                    <div className="flex-1">
-                        <h4 className="font-medium">{cancelledStep.label}</h4>
-                        <p>{cancelledStep.description}</p>
-                    </div>
-                </div>
-            )}
+            {order.status === 'CANCELLED' && (<div className="flex items-center space-x-3 p-3 rounded-lg bg-red-50 text-red-800"><XCircle className="h-6 w-6" /><div className="flex-1"><h4 className="font-medium">{cancelledStep.label}</h4><p>{cancelledStep.description}</p></div></div>)}
           </div>
         </CardContent>
       </Card>
@@ -197,8 +132,9 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
             {order.items.map((item, index) => (
               <div key={item.id || index} className="flex justify-between items-center py-2 border-b last:border-b-0">
                 <div>
-                  <p className="font-medium">{item.quantity}x {item.pizzaType.name} - {item.flavor.name}</p>
-                  {item.extras.length > 0 && (<p className="text-sm text-gray-600">+ {item.extras.map((e) => e.name).join(", ")}</p>)}
+                  {/* --- LINHA CORRIGIDA --- */}
+                  <p className="font-medium">{item.quantity}x {item.pizzaType?.name || 'Tipo Removido'} - {item.flavors?.map(f => f.name).join(' / ') || 'Sabor Removido'}</p>
+                  {item.extras?.length > 0 && (<p className="text-sm text-gray-600">+ {item.extras.map((e) => e.name).join(", ")}</p>)}
                   {item.observations && (<p className="text-sm text-gray-600">Obs: {item.observations}</p>)}
                 </div>
                 <span className="font-semibold">{formatPrice(item.totalPrice)}</span>

@@ -23,6 +23,7 @@ export const CartItem = ({
   };
 
   const unitPrice = item.totalPrice / item.quantity;
+  const flavorNames = item.flavors.map(f => f.name).join(' / ');
 
   return (
     <Card className="mb-4">
@@ -33,14 +34,13 @@ export const CartItem = ({
               <h3 className="font-semibold text-gray-900">
                 {item.pizzaType.name}
               </h3>
-              <Badge variant="secondary">{item.flavor.name}</Badge>
+              <Badge variant="secondary">{flavorNames}</Badge>
             </div>
 
             <p className="text-sm text-gray-600 mb-2">
-              {item.flavor.description}
+              {item.flavors.length > 1 ? `Metade ${item.flavors[0].name}, Metade ${item.flavors[1].name}` : item.flavors[0].description}
             </p>
 
-            {/* --- CÓDIGO NOVO PARA BORDA --- */}
             {item.crust && (
               <p className="text-sm text-gray-700 font-medium mb-2">
                 Borda: {item.crust.name}{" "}

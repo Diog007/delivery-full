@@ -13,9 +13,9 @@ public class OrderDtos {
 
     public record CartItemRequestDto(
             String pizzaTypeId,
-            String flavorId,
+            List<String> flavorIds, // MODIFICADO DE flavorId PARA flavorIds
             List<String> extraIds,
-            String crustId, // --- CÓDIGO NOVO ---
+            String crustId,
             String observations,
             int quantity,
             double totalPrice

@@ -15,9 +15,9 @@ public class OrderMapper {
                 .map(item -> new ResponseDtos.OrderItemDto(
                         item.getId(),
                         item.getPizzaType(),
-                        item.getFlavor(),
+                        item.getFlavors(), // MODIFICADO DE getFlavor PARA getFlavors
                         item.getExtras(),
-                        item.getCrust(), // --- CÓDIGO NOVO ---
+                        item.getCrust(),
                         item.getObservations(),
                         item.getQuantity(),
                         item.getTotalPrice()

@@ -14,9 +14,9 @@ public class ResponseDtos {
     public record OrderItemDto(
             String id,
             PizzaType pizzaType,
-            PizzaFlavor flavor,
+            List<PizzaFlavor> flavors, // MODIFICADO DE flavor PARA flavors
             List<PizzaExtra> extras,
-            PizzaCrust crust, // --- CÓDIGO NOVO ---
+            PizzaCrust crust,
             String observations,
             int quantity,
             double totalPrice
