@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api/admin") // Este prefixo protege todos os endpoints abaixo
 @RequiredArgsConstructor
 public class AdminController {
 
@@ -26,9 +26,70 @@ public class AdminController {
     private final MenuService menuService;
     private final CustomerService customerService;
 
-    // ... Endpoints de Pedidos, Dashboard e Clientes (sem alteração)
+    // --- ENDPOINTS DO DASHBOARD (ADICIONADOS) ---
+    @GetMapping("/dashboard/stats")
+    public ResponseEntity<DashboardDtos.DashboardStats> getDashboardStats() {
+        return ResponseEntity.ok(dashboardService.getDashboardStats());
+    }
 
-    // --- Endpoints de Gerenciamento de Cardápio ---
+    @GetMapping("/dashboard/weekly-sales")
+    public ResponseEntity<List<DashboardDtos.DailySale>> getWeeklySales() {
+        return ResponseEntity.ok(dashboardService.getWeeklySalesChartData());
+    }
+
+    @GetMapping("/dashboard/sales-by-type")
+    public ResponseEntity<List<DashboardDtos.SalesByPizzaType>> getSalesByType() {
+        return ResponseEntity.ok(dashboardService.getSalesByPizzaTypeChartData());
+    }
+
+    // --- ENDPOINTS DE PEDIDOS (ADICIONADOS) ---
+    @GetMapping("/orders")
+    public ResponseEntity<List<ResponseDtos.OrderResponseDto>> getAllOrders() {
+        List<Order> orders = orderService.getAllOrders();
+        List<ResponseDtos.OrderResponseDto> dtos = orders.stream()
+                .map(OrderMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PatchMapping("/orders/{id}/status")
+    public ResponseEntity<ResponseDtos.OrderResponseDto> updateOrderStatus(@PathVariable String id, @RequestBody OrderDtos.OrderStatusUpdate statusUpdate) {
+        return orderService.updateOrderStatus(id, statusUpdate.status())
+                .map(OrderMapper::toDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- ENDPOINTS DE CLIENTES (ADICIONADOS) ---
+    @GetMapping("/customers")
+    public ResponseEntity<List<CustomerDtos.CustomerResponseDto>> getAllCustomers() {
+        return ResponseEntity.ok(customerService.getAllCustomers());
+    }
+
+    @PutMapping("/customers/{id}")
+    public ResponseEntity<CustomerDtos.CustomerResponseDto> updateCustomer(@PathVariable String id, @RequestBody CustomerDtos.AdminCustomerUpdateRequest updateRequest) {
+        return ResponseEntity.ok(customerService.updateCustomer(id, updateRequest));
+    }
+
+    @DeleteMapping("/customers/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable String id) {
+        customerService.deleteCustomerById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/addresses/{id}")
+    public ResponseEntity<CustomerDtos.AddressDto> updateAddress(@PathVariable String id, @RequestBody CustomerDtos.AddressDto addressDto) {
+        return ResponseEntity.ok(customerService.updateAddress(id, addressDto));
+    }
+
+    @DeleteMapping("/addresses/{id}")
+    public ResponseEntity<Void> deleteAddress(@PathVariable String id) {
+        customerService.deleteAddress(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    // --- Endpoints de Gerenciamento de Cardápio (JÁ EXISTENTES E FUNCIONAIS) ---
 
     // --- TIPOS ---
     @PostMapping("/types")
@@ -83,7 +144,7 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- NOVOS ENDPOINTS PARA BORDAS ---
+    // --- BORDAS ---
     @PostMapping("/crusts")
     public ResponseEntity<PizzaCrust> createCrust(@RequestBody MenuDtos.CrustUpdateRequest crust) {
         return new ResponseEntity<>(menuService.saveCrust(crust), HttpStatus.CREATED);

@@ -26,6 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return new User(
                     admin.get().getUsername(),
                     admin.get().getPassword(),
+                    // AQUI ESTÁ A CORREÇÃO PARA ADMIN
                     List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
             );
         }
@@ -36,6 +37,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return new User(
                     customer.get().getEmail(),
                     customer.get().getPassword(),
+                    // AQUI ESTÁ A CORREÇÃO PARA CLIENTE
                     List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
             );
         }
