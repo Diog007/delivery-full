@@ -1,10 +1,9 @@
 package com.pizzadelivery.backend.controller;
 
-import com.pizzadelivery.backend.dto.AuthDtos;
+import com.pizzadelivery.backend.entity.PizzaCrust;
 import com.pizzadelivery.backend.entity.PizzaExtra;
 import com.pizzadelivery.backend.entity.PizzaFlavor;
 import com.pizzadelivery.backend.entity.PizzaType;
-import com.pizzadelivery.backend.service.AuthService;
 import com.pizzadelivery.backend.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,9 +34,19 @@ public class MenuController {
         return ResponseEntity.ok(menuService.getAllExtras());
     }
 
-    // --- NOVO ENDPOINT ---
     @GetMapping("/types/{typeId}/extras")
     public ResponseEntity<List<PizzaExtra>> getExtrasForType(@PathVariable String typeId) {
         return ResponseEntity.ok(menuService.getExtrasByTypeId(typeId));
+    }
+
+    // --- NOVOS ENDPOINTS PARA BORDAS ---
+    @GetMapping("/crusts")
+    public ResponseEntity<List<PizzaCrust>> getAllCrusts() {
+        return ResponseEntity.ok(menuService.getAllCrusts());
+    }
+
+    @GetMapping("/types/{typeId}/crusts")
+    public ResponseEntity<List<PizzaCrust>> getCrustsForType(@PathVariable String typeId) {
+        return ResponseEntity.ok(menuService.getCrustsByTypeId(typeId));
     }
 }

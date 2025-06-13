@@ -40,6 +40,16 @@ export const CartItem = ({
               {item.flavor.description}
             </p>
 
+            {/* --- CÓDIGO NOVO PARA BORDA --- */}
+            {item.crust && (
+              <p className="text-sm text-gray-700 font-medium mb-2">
+                Borda: {item.crust.name}{" "}
+                <span className="text-gray-500 font-normal">
+                  (+{formatPrice(item.crust.price)})
+                </span>
+              </p>
+            )}
+
             {item.extras.length > 0 && (
               <div className="mb-2">
                 <p className="text-sm font-medium text-gray-700 mb-1">

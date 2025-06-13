@@ -8,6 +8,14 @@ export type OrderStatus =
 export type DeliveryType = "DELIVERY" | "PICKUP";
 export type PaymentMethod = "CASH" | "CARD";
 
+// --- NOVA INTERFACE ---
+export interface PizzaCrust {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
 export interface PizzaType {
   id: string;
   name: string;
@@ -15,6 +23,7 @@ export interface PizzaType {
   basePrice: number;
   imageUrl?: string;
   availableExtras?: PizzaExtra[];
+  availableCrusts?: PizzaCrust[]; // --- LINHA NOVA ---
 }
 
 export interface PizzaFlavor {
@@ -37,6 +46,7 @@ export interface CartItem {
   id: string;
   pizzaType: PizzaType;
   flavor: PizzaFlavor;
+  crust: PizzaCrust | null; // --- LINHA MODIFICADA ---
   extras: PizzaExtra[];
   observations: string;
   quantity: number;
@@ -122,9 +132,4 @@ export interface Customer {
   whatsapp: string;
   cpf: string;
   addresses: Address[];
-  // --- NOVOS CAMPOS ADICIONADOS ---
-  status?: 'active' | 'inactive'; // Status do cliente
-  totalOrders?: number;           // Total de pedidos feitos
-  totalSpent?: number;            // Total gasto pelo cliente
-  lastOrderDate?: string;         // Data do último pedido
 }

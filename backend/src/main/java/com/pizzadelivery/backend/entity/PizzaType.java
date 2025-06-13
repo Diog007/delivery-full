@@ -22,11 +22,20 @@ public class PizzaType {
     private double basePrice;
     private String imageUrl;
 
-    @ManyToMany(fetch = FetchType.EAGER) // MODIFICADO DE LAZY PARA EAGER
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "pizza_type_extras",
             joinColumns = @JoinColumn(name = "pizza_type_id"),
             inverseJoinColumns = @JoinColumn(name = "pizza_extra_id")
     )
     private List<PizzaExtra> availableExtras;
+
+    // --- CÓDIGO NOVO ---
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "pizza_type_crusts",
+            joinColumns = @JoinColumn(name = "pizza_type_id"),
+            inverseJoinColumns = @JoinColumn(name = "pizza_crust_id")
+    )
+    private List<PizzaCrust> availableCrusts;
 }

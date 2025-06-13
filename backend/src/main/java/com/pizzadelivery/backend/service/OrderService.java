@@ -23,6 +23,7 @@ public class OrderService {
     private final PizzaTypeRepository pizzaTypeRepository;
     private final PizzaFlavorRepository pizzaFlavorRepository;
     private final PizzaExtraRepository pizzaExtraRepository;
+    private final PizzaCrustRepository pizzaCrustRepository; // --- CÓDIGO NOVO ---
     private final CustomerUserRepository customerUserRepository;
     private final AddressRepository addressRepository;
 
@@ -46,12 +47,20 @@ public class OrderService {
             PizzaFlavor flavor = pizzaFlavorRepository.findById(itemDto.flavorId())
                     .orElseThrow(() -> new RuntimeException("Sabor não encontrado: " + itemDto.flavorId()));
 
+            // --- LÓGICA ATUALIZADA ---
+            PizzaCrust crust = null;
+            if (itemDto.crustId() != null && !itemDto.crustId().isEmpty()) {
+                crust = pizzaCrustRepository.findById(itemDto.crustId())
+                        .orElseThrow(() -> new RuntimeException("Borda não encontrada: " + itemDto.crustId()));
+            }
+
             List<PizzaExtra> extras = pizzaExtraRepository.findAllById(itemDto.extraIds());
 
             return OrderItem.builder()
                     .pizzaType(pizzaType)
                     .flavor(flavor)
                     .extras(extras)
+                    .crust(crust) // --- CÓDIGO NOVO ---
                     .observations(itemDto.observations())
                     .quantity(itemDto.quantity())
                     .totalPrice(itemDto.totalPrice())

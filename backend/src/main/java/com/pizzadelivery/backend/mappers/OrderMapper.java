@@ -17,6 +17,7 @@ public class OrderMapper {
                         item.getPizzaType(),
                         item.getFlavor(),
                         item.getExtras(),
+                        item.getCrust(), // --- CÓDIGO NOVO ---
                         item.getObservations(),
                         item.getQuantity(),
                         item.getTotalPrice()

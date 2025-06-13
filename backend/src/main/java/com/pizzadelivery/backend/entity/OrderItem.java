@@ -26,6 +26,11 @@ public class OrderItem {
     @ManyToMany(fetch = FetchType.EAGER)
     private List<PizzaExtra> extras;
 
+    // --- CÓDIGO NOVO ---
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "crust_id", nullable = true) // A borda é opcional
+    private PizzaCrust crust;
+
     private String observations;
     private int quantity;
     private double totalPrice;

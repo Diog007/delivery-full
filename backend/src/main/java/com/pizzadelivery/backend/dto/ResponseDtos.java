@@ -9,21 +9,19 @@ import java.util.List;
 
 public class ResponseDtos {
 
-    // Representação segura de um usuário para a API
     public record CustomerUserDto(String id, String name, String email) {}
 
-    // Representação de um item do pedido para a API
     public record OrderItemDto(
             String id,
             PizzaType pizzaType,
             PizzaFlavor flavor,
             List<PizzaExtra> extras,
+            PizzaCrust crust, // --- CÓDIGO NOVO ---
             String observations,
             int quantity,
             double totalPrice
     ) {}
 
-    // A resposta completa do pedido que será enviada como JSON. Usa os Enums.
     public record OrderResponseDto(
             String id,
             List<OrderItemDto> items,

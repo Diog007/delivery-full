@@ -1,9 +1,11 @@
 package com.pizzadelivery.backend.service;
 
 import com.pizzadelivery.backend.dto.MenuDtos;
+import com.pizzadelivery.backend.entity.PizzaCrust;
 import com.pizzadelivery.backend.entity.PizzaExtra;
 import com.pizzadelivery.backend.entity.PizzaFlavor;
 import com.pizzadelivery.backend.entity.PizzaType;
+import com.pizzadelivery.backend.repository.PizzaCrustRepository;
 import com.pizzadelivery.backend.repository.PizzaExtraRepository;
 import com.pizzadelivery.backend.repository.PizzaFlavorRepository;
 import com.pizzadelivery.backend.repository.PizzaTypeRepository;
@@ -24,20 +26,14 @@ public class MenuService {
     private final PizzaTypeRepository pizzaTypeRepo;
     private final PizzaFlavorRepository pizzaFlavorRepo;
     private final PizzaExtraRepository pizzaExtraRepo;
+    private final PizzaCrustRepository pizzaCrustRepo; // --- CÓDIGO NOVO ---
     private final FileStorageService fileStorageService;
 
 
-    public List<PizzaType> getAllTypes() {
-        return pizzaTypeRepo.findAll();
-    }
-
-    public List<PizzaFlavor> getAllFlavors() {
-        return pizzaFlavorRepo.findAll();
-    }
-
-    public List<PizzaExtra> getAllExtras() {
-        return pizzaExtraRepo.findAll();
-    }
+    public List<PizzaType> getAllTypes() { return pizzaTypeRepo.findAll(); }
+    public List<PizzaFlavor> getAllFlavors() { return pizzaFlavorRepo.findAll(); }
+    public List<PizzaExtra> getAllExtras() { return pizzaExtraRepo.findAll(); }
+    public List<PizzaCrust> getAllCrusts() { return pizzaCrustRepo.findAll(); } // --- CÓDIGO NOVO ---
 
     @Transactional
     public PizzaType saveType(PizzaType type) {
@@ -48,6 +44,16 @@ public class MenuService {
         } else {
             type.setAvailableExtras(Collections.emptyList());
         }
+
+        // --- LÓGICA NOVA PARA BORDAS ---
+        if (type.getAvailableCrusts() != null && !type.getAvailableCrusts().isEmpty()) {
+            List<String> crustIds = type.getAvailableCrusts().stream().map(PizzaCrust::getId).collect(Collectors.toList());
+            List<PizzaCrust> crusts = pizzaCrustRepo.findAllById(crustIds);
+            type.setAvailableCrusts(crusts);
+        } else {
+            type.setAvailableCrusts(Collections.emptyList());
+        }
+
         return pizzaTypeRepo.save(type);
     }
 
@@ -65,6 +71,15 @@ public class MenuService {
         } else {
             type.setAvailableExtras(Collections.emptyList());
         }
+
+        // --- LÓGICA NOVA PARA BORDAS ---
+        if (typeDetails.getAvailableCrusts() != null) {
+            List<String> crustIds = typeDetails.getAvailableCrusts().stream().map(PizzaCrust::getId).collect(Collectors.toList());
+            List<PizzaCrust> crusts = pizzaCrustRepo.findAllById(crustIds);
+            type.setAvailableCrusts(crusts);
+        } else {
+            type.setAvailableCrusts(Collections.emptyList());
+        }
         return pizzaTypeRepo.save(type);
     }
 
@@ -72,10 +87,8 @@ public class MenuService {
     public PizzaType savePizzaTypeImage(String typeId, MultipartFile file) {
         PizzaType type = pizzaTypeRepo.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado com o id: " + typeId));
-
         String imageUrl = fileStorageService.storeFile(file);
         type.setImageUrl(imageUrl);
-
         return pizzaTypeRepo.save(type);
     }
 
@@ -87,9 +100,18 @@ public class MenuService {
     public List<PizzaExtra> getExtrasByTypeId(String typeId) {
         PizzaType type = pizzaTypeRepo.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado com o id: " + typeId));
-        return new java.util.ArrayList<>(type.getAvailableExtras());
+        return new ArrayList<>(type.getAvailableExtras());
     }
 
+    // --- NOVO MÉTODO ---
+    @Transactional
+    public List<PizzaCrust> getCrustsByTypeId(String typeId) {
+        PizzaType type = pizzaTypeRepo.findById(typeId)
+                .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado com o id: " + typeId));
+        return new ArrayList<>(type.getAvailableCrusts());
+    }
+
+    // --- MÉTODOS DE SABORES ---
     @Transactional
     public PizzaFlavor saveFlavor(PizzaFlavor flavor) {
         PizzaType type = pizzaTypeRepo.findById(flavor.getPizzaType().getId())
@@ -114,10 +136,8 @@ public class MenuService {
     public PizzaFlavor saveFlavorImage(String flavorId, MultipartFile file) {
         PizzaFlavor flavor = pizzaFlavorRepo.findById(flavorId)
                 .orElseThrow(() -> new RuntimeException("Sabor não encontrado com o id: " + flavorId));
-
         String imageUrl = fileStorageService.storeFile(file);
         flavor.setImageUrl(imageUrl);
-
         return pizzaFlavorRepo.save(flavor);
     }
 
@@ -125,6 +145,7 @@ public class MenuService {
         pizzaFlavorRepo.deleteById(id);
     }
 
+    // --- MÉTODOS DE ADICIONAIS ---
     @Transactional
     public PizzaExtra saveExtra(MenuDtos.ExtraUpdateRequest dto) {
         PizzaExtra newExtra = PizzaExtra.builder()
@@ -154,11 +175,9 @@ public class MenuService {
         extra.setDescription(dto.description());
         extra.setPrice(dto.price());
 
-        // Dissocia de todos os tipos atuais
         List<PizzaType> oldAssociations = pizzaTypeRepo.findByAvailableExtrasId(id);
         oldAssociations.forEach(type -> type.getAvailableExtras().removeIf(e -> e.getId().equals(id)));
 
-        // Associa com a nova lista de tipos
         if (dto.pizzaTypeIds() != null && !dto.pizzaTypeIds().isEmpty()) {
             List<PizzaType> newAssociations = pizzaTypeRepo.findAllById(dto.pizzaTypeIds());
             newAssociations.forEach(type -> {
@@ -172,11 +191,61 @@ public class MenuService {
 
     @Transactional
     public void deleteExtra(String id) {
-        // Garante que a dissociação ocorra antes de deletar
         List<PizzaType> associations = pizzaTypeRepo.findByAvailableExtrasId(id);
         associations.forEach(type -> type.getAvailableExtras().removeIf(e -> e.getId().equals(id)));
         pizzaTypeRepo.saveAll(associations);
-
         pizzaExtraRepo.deleteById(id);
+    }
+
+    // --- NOVOS MÉTODOS PARA BORDAS ---
+    @Transactional
+    public PizzaCrust saveCrust(MenuDtos.CrustUpdateRequest dto) {
+        PizzaCrust newCrust = PizzaCrust.builder()
+                .name(dto.name())
+                .description(dto.description())
+                .price(dto.price())
+                .build();
+        final PizzaCrust savedCrust = pizzaCrustRepo.save(newCrust);
+
+        if (dto.pizzaTypeIds() != null && !dto.pizzaTypeIds().isEmpty()) {
+            List<PizzaType> typesToAssociate = pizzaTypeRepo.findAllById(dto.pizzaTypeIds());
+            typesToAssociate.forEach(type -> {
+                if (type.getAvailableCrusts() == null) {
+                    type.setAvailableCrusts(new ArrayList<>());
+                }
+                type.getAvailableCrusts().add(savedCrust);
+            });
+        }
+        return savedCrust;
+    }
+
+    @Transactional
+    public PizzaCrust updateCrust(String id, MenuDtos.CrustUpdateRequest dto) {
+        PizzaCrust crust = pizzaCrustRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("PizzaCrust not found"));
+        crust.setName(dto.name());
+        crust.setDescription(dto.description());
+        crust.setPrice(dto.price());
+
+        List<PizzaType> oldAssociations = pizzaTypeRepo.findByAvailableCrustsId(id);
+        oldAssociations.forEach(type -> type.getAvailableCrusts().removeIf(c -> c.getId().equals(id)));
+
+        if (dto.pizzaTypeIds() != null && !dto.pizzaTypeIds().isEmpty()) {
+            List<PizzaType> newAssociations = pizzaTypeRepo.findAllById(dto.pizzaTypeIds());
+            newAssociations.forEach(type -> {
+                if (type.getAvailableCrusts().stream().noneMatch(c -> c.getId().equals(id))) {
+                    type.getAvailableCrusts().add(crust);
+                }
+            });
+        }
+        return pizzaCrustRepo.save(crust);
+    }
+
+    @Transactional
+    public void deleteCrust(String id) {
+        List<PizzaType> associations = pizzaTypeRepo.findByAvailableCrustsId(id);
+        associations.forEach(type -> type.getAvailableCrusts().removeIf(c -> c.getId().equals(id)));
+        pizzaTypeRepo.saveAll(associations);
+        pizzaCrustRepo.deleteById(id);
     }
 }

@@ -1,4 +1,4 @@
-import { Admin, DashboardStats, DailySale, SalesByPizzaType, Order, OrderStatus, PizzaExtra, PizzaFlavor, PizzaType, Customer, Address } from "@/types";
+import { Admin, DashboardStats, DailySale, SalesByPizzaType, Order, OrderStatus, PizzaExtra, PizzaFlavor, PizzaType, Customer, Address, PizzaCrust } from "@/types";
 import { AuthDtos, OrderDtos, CustomerDtos, MenuDtos } from "@/dto";
 
 const API_BASE_URL = 'http://localhost:8090/api';
@@ -46,6 +46,9 @@ const publicApi = {
   getPizzaExtras: () => baseRequest<PizzaExtra[]>('/menu/extras'),
   getExtrasForType: (typeId: string) => baseRequest<PizzaExtra[]>(`/menu/types/${typeId}/extras`),
   getOrderById: (id: string) => baseRequest<Order>(`/orders/${id}`),
+  // --- NOVOS MÉTODOS ---
+  getAllCrusts: () => baseRequest<PizzaCrust[]>('/menu/crusts'),
+  getCrustsForType: (typeId: string) => baseRequest<PizzaCrust[]>(`/menu/types/${typeId}/crusts`),
 };
 
 const customerApi = {
@@ -63,7 +66,6 @@ const adminApi = {
   getAllOrders: () => baseRequest<Order[]>('/admin/orders'),
   updateOrderStatus: (id: string, status: OrderStatus) => baseRequest<Order>(`/admin/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   
-  // Tipos de Pizza
   createPizzaType: (data: Partial<PizzaType>) => baseRequest<PizzaType>('/admin/types', { method: 'POST', body: JSON.stringify(data) }),
   updatePizzaType: (id: string, data: Partial<PizzaType>) => baseRequest<PizzaType>(`/admin/types/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   uploadPizzaTypeImage: (id: string, file: File) => {
@@ -73,7 +75,6 @@ const adminApi = {
   },
   deletePizzaType: (id: string) => baseRequest<void>(`/admin/types/${id}`, { method: 'DELETE' }),
   
-  // Sabores de Pizza
   createPizzaFlavor: (data: Partial<PizzaFlavor>) => baseRequest<PizzaFlavor>('/admin/flavors', { method: 'POST', body: JSON.stringify(data) }),
   updatePizzaFlavor: (id: string, data: Partial<PizzaFlavor>) => baseRequest<PizzaFlavor>(`/admin/flavors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   uploadFlavorImage: (id: string, file: File) => {
@@ -83,17 +84,19 @@ const adminApi = {
   },
   deletePizzaFlavor: (id: string) => baseRequest<void>(`/admin/flavors/${id}`, { method: 'DELETE' }),
 
-  // Adicionais de Pizza (CORRIGIDO)
   createPizzaExtra: (data: MenuDtos.ExtraUpdateRequest) => baseRequest<PizzaExtra>('/admin/extras', { method: 'POST', body: JSON.stringify(data) }),
   updatePizzaExtra: (id: string, data: MenuDtos.ExtraUpdateRequest) => baseRequest<PizzaExtra>(`/admin/extras/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deletePizzaExtra: (id: string) => baseRequest<void>(`/admin/extras/${id}`, { method: 'DELETE' }),
 
-  // Clientes
+  // --- NOVOS MÉTODOS ---
+  createPizzaCrust: (data: MenuDtos.CrustUpdateRequest) => baseRequest<PizzaCrust>('/admin/crusts', { method: 'POST', body: JSON.stringify(data) }),
+  updatePizzaCrust: (id: string, data: MenuDtos.CrustUpdateRequest) => baseRequest<PizzaCrust>(`/admin/crusts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePizzaCrust: (id: string) => baseRequest<void>(`/admin/crusts/${id}`, { method: 'DELETE' }),
+
   getAllCustomers: () => baseRequest<Customer[]>('/admin/customers'),
   updateCustomer: (id: string, data: CustomerDtos.AdminCustomerUpdateRequest) => baseRequest<Customer>(`/admin/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteCustomer: (id: string) => baseRequest<void>(`/admin/customers/${id}`, { method: 'DELETE' }),
   
-  // Endereços (não existia endpoint para criar, mas o de editar e deletar é útil)
   updateAddress: (id: string, data: Address) => baseRequest<Address>(`/admin/addresses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteAddress: (id: string) => baseRequest<void>(`/admin/addresses/${id}`, { method: 'DELETE' }),
 };

@@ -5,7 +5,6 @@ import com.pizzadelivery.backend.entity.Payment;
 import com.pizzadelivery.backend.enums.DeliveryType;
 import com.pizzadelivery.backend.enums.OrderStatus;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class OrderDtos {
@@ -16,13 +15,12 @@ public class OrderDtos {
             String pizzaTypeId,
             String flavorId,
             List<String> extraIds,
+            String crustId, // --- CÓDIGO NOVO ---
             String observations,
             int quantity,
             double totalPrice
     ) {}
 
-    // --- CORREÇÃO APLICADA AQUI ---
-    // Removido createdAt e estimatedDeliveryTime do DTO
     public record CreateOrderDto(
             List<CartItemRequestDto> items,
             DeliveryType deliveryType,

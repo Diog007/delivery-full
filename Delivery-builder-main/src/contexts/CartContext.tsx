@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { CartItem, PizzaType, PizzaFlavor, PizzaExtra } from "@/types";
+import { CartItem, PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust } from "@/types";
 
 interface CartContextType {
   items: CartItem[];
   addItem: (
     pizzaType: PizzaType,
     flavor: PizzaFlavor,
+    crust: PizzaCrust | null,
     extras: PizzaExtra[],
     observations: string,
     quantity: number,
@@ -37,18 +38,21 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const addItem = (
     pizzaType: PizzaType,
     flavor: PizzaFlavor,
+    crust: PizzaCrust | null,
     extras: PizzaExtra[],
     observations: string,
     quantity: number,
   ) => {
     const extrasPrice = extras.reduce((sum, extra) => sum + extra.price, 0);
+    const crustPrice = crust ? crust.price : 0;
     const totalPrice =
-      (pizzaType.basePrice + flavor.price + extrasPrice) * quantity;
+      (pizzaType.basePrice + flavor.price + extrasPrice + crustPrice) * quantity;
 
     const newItem: CartItem = {
       id: Date.now().toString(),
       pizzaType,
       flavor,
+      crust,
       extras,
       observations,
       quantity,
