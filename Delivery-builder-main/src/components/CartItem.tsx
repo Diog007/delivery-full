@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { CartItem as CartItemType } from "@/types";
+import { formatPrice } from "@/lib/utils";
+import { Separator } from "./ui/separator";
 
 interface CartItemProps {
   item: CartItemType;
@@ -15,72 +16,85 @@ export const CartItem = ({
   onUpdateQuantity,
   onRemove,
 }: CartItemProps) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(price);
-  };
-
   const unitPrice = item.totalPrice / item.quantity;
-  const flavorNames = item.flavors.map(f => f.name).join(' / ');
+  const isHalfAndHalf = item.flavors.length > 1;
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 shadow-sm">
       <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
-              <h3 className="font-semibold text-gray-900">{item.pizzaType.name}</h3>
-              <Badge variant="secondary">{flavorNames}</Badge>
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+          {/* Coluna de Detalhes da Pizza e Preços */}
+          <div className="flex-1 space-y-3">
+            <div>
+              <h3 className="font-semibold text-lg text-gray-900">{item.pizzaType.name}</h3>
+              <p className="text-sm font-medium text-red-600">
+                {item.flavors.map(f => f.name).join(' / ')}
+              </p>
             </div>
 
-            <p className="text-sm text-gray-600 mb-2">
-              {item.flavors.length > 1 ? `Metade ${item.flavors[0].name}, Metade ${item.flavors[1].name}` : item.flavors[0].description}
-            </p>
-
-            {item.crust && (
-              <p className="text-sm text-gray-700 font-medium mb-2">
-                Borda: {item.crust.name} <span className="text-gray-500 font-normal">(+{formatPrice(item.crust.price)})</span>
-              </p>
-            )}
-
-            {/* --- LÓGICA DE EXIBIÇÃO DE ADICIONAIS ATUALIZADA --- */}
-            {item.appliedExtras.length > 0 && (
-              <div className="mb-2">
-                <p className="text-sm font-medium text-gray-700 mb-1">Adicionais:</p>
-                <div className="flex flex-wrap gap-1">
-                  {item.appliedExtras.map((applied, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {applied.extra.name}
-                      <span className="text-gray-500 ml-1">
-                        ({applied.onFlavor ? `Metade ${applied.onFlavor.name}` : 'Pizza Toda'})
-                      </span>
-                    </Badge>
-                  ))}
+            {/* Detalhes do Preço Unitário */}
+            <div className="text-sm border-l-2 border-gray-200 pl-3 py-1 space-y-1">
+                <p className="font-semibold text-gray-700 mb-1">Detalhes do Preço Unitário:</p>
+                <div className="flex justify-between items-center text-gray-600">
+                    <span>Pizza Base</span>
+                    <span>{formatPrice(item.pizzaType.basePrice)}</span>
                 </div>
-              </div>
-            )}
-            {/* --- FIM DA ATUALIZAÇÃO --- */}
+                {item.flavors.map(flavor => (
+                    <div key={flavor.id} className="flex justify-between items-center text-gray-600">
+                        <span>Sabor: {flavor.name} {isHalfAndHalf && '(1/2)'}</span>
+                        <span>+ {formatPrice(isHalfAndHalf ? flavor.price / 2 : flavor.price)}</span>
+                    </div>
+                ))}
+                {item.crust && (
+                     <div className="flex justify-between items-center text-gray-600">
+                        <span>Borda: {item.crust.name}</span>
+                        <span>+ {formatPrice(item.crust.price)}</span>
+                    </div>
+                )}
+                {/* --- TRECHO MODIFICADO --- */}
+                {item.appliedExtras.map((applied, index) => (
+                    <div key={index} className="flex justify-between items-center text-gray-600">
+                       <span>
+                         Adicional: {applied.extra.name}
+                         {/* Mostra em qual sabor foi aplicado */}
+                         <span className="text-gray-500 text-xs ml-1">
+                            ({applied.onFlavor ? `Metade ${applied.onFlavor.name}` : 'Pizza Toda'})
+                         </span>
+                       </span>
+                       <span>+ {formatPrice(applied.extra.price)}</span>
+                   </div>
+                ))}
+                {/* --- FIM DO TRECHO MODIFICADO --- */}
+                <Separator className="my-2" />
+                 <div className="flex justify-between items-center font-semibold text-gray-800">
+                    <span>Subtotal Unitário</span>
+                    <span>{formatPrice(unitPrice)}</span>
+                </div>
+            </div>
 
             {item.observations && (
-              <div className="mb-2">
-                <p className="text-sm font-medium text-gray-700">Observações:</p>
-                <p className="text-sm text-gray-600">{item.observations}</p>
+              <div className="pt-2">
+                <p className="text-sm font-semibold text-gray-700">Observações:</p>
+                <p className="text-sm text-gray-600 italic">"{item.observations}"</p>
               </div>
             )}
-
-            <div className="text-sm text-gray-600">Preço unitário: {formatPrice(unitPrice)}</div>
           </div>
-
-          <div className="flex flex-col items-end space-y-2 ml-4">
-            <Button variant="ghost" size="sm" onClick={() => onRemove(item.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}><Minus className="h-4 w-4" /></Button>
-              <span className="font-medium w-8 text-center">{item.quantity}</span>
-              <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
+          
+          {/* Coluna de Quantidade e Preço Total */}
+          <div className="flex flex-col items-end space-y-3 w-full sm:w-auto self-stretch justify-between">
+            <div className="flex flex-col items-end">
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}><Minus className="h-4 w-4" /></Button>
+                <span className="font-bold w-8 text-center text-lg">{item.quantity}</span>
+                <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
+              </div>
+              <p className="font-bold text-xl text-gray-900 mt-2">{formatPrice(item.totalPrice)}</p>
             </div>
-            <div className="font-semibold text-lg">{formatPrice(item.totalPrice)}</div>
+            
+            <Button variant="ghost" size="sm" onClick={() => onRemove(item.id)} className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                Remover
+            </Button>
           </div>
         </div>
       </CardContent>
