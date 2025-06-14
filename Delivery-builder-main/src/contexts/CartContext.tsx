@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { CartItem, PizzaType, PizzaFlavor, PizzaCrust, AppliedExtra } from "@/types";
+import { CartItem, PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust, AppliedExtra } from "@/types";
 
 interface CartContextType {
   items: CartItem[];
@@ -43,11 +43,19 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     observations: string,
     quantity: number,
   ) => {
-    const highestFlavorPrice = flavors.length > 0 ? Math.max(...flavors.map(f => f.price)) : 0;
+    // --- LÓGICA DE CÁLCULO DE PREÇO ATUALIZADA ---
+    const isHalfAndHalf = flavors.length > 1;
+    
+    const flavorPrice = flavors.reduce((sum, flavor) => {
+      // Se for meio a meio, divide o preço do sabor por 2. Senão, usa o preço cheio.
+      return sum + (isHalfAndHalf ? flavor.price / 2 : flavor.price);
+    }, 0);
+
     const extrasPrice = appliedExtras.reduce((sum, applied) => sum + applied.extra.price, 0);
     const crustPrice = crust ? crust.price : 0;
     
-    const totalPrice = (pizzaType.basePrice + highestFlavorPrice + extrasPrice + crustPrice) * quantity;
+    const totalPrice = (pizzaType.basePrice + flavorPrice + extrasPrice + crustPrice) * quantity;
+    // --- FIM DA LÓGICA DE CÁLCULO ---
 
     const newItem: CartItem = {
       id: Date.now().toString(),

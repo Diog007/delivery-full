@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Clock, Truck, Package, XCircle } from "lucide-react";
+import { 
+  CheckCircle, Clock, Truck, Package, XCircle, Home, Wallet, Pizza, Star, Slice, PlusCircle, MessageSquare 
+} from "lucide-react";
 import { Order, OrderStatus } from "@/types";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { formatPrice } from "@/lib/utils";
+import { Separator } from "./ui/separator";
 
 interface OrderTrackerProps {
   order: Order | null | undefined;
@@ -126,30 +129,92 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Detalhes do Pedido</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Detalhes da Entrega e Pagamento</CardTitle></CardHeader>
+        <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h4 className="font-semibold flex items-center mb-2"><Home className="h-5 w-5 mr-2 text-red-600"/>Entrega</h4>
+                    <p className="text-gray-700">{order.deliveryType === 'DELIVERY' ? 'Entrega em Domicílio' : 'Retirada no Local'}</p>
+                    {order.deliveryType === 'DELIVERY' && order.deliveryAddress && (
+                        <div className="text-sm text-gray-600 mt-1">
+                            <p>{order.deliveryAddress.street}, {order.deliveryAddress.number}</p>
+                            <p>{order.deliveryAddress.neighborhood}, {order.deliveryAddress.city}</p>
+                            <p>CEP: {order.deliveryAddress.zipCode}</p>
+                        </div>
+                    )}
+                </div>
+                <div>
+                    <h4 className="font-semibold flex items-center mb-2"><Wallet className="h-5 w-5 mr-2 text-red-600"/>Pagamento</h4>
+                    <p className="text-gray-700">{order.payment.method === 'CASH' ? 'Dinheiro' : `Cartão`}</p>
+                    {order.payment.method === 'CARD' && (
+                        <p className="text-sm text-gray-600 mt-1 capitalize">{order.payment.cardBrand} - {order.payment.cardType}</p>
+                    )}
+                </div>
+            </div>
+        </CardContent>
+      </Card>
+
+      {/* --- CARD DE RESUMO DA COMPRA ATUALIZADO --- */}
+      <Card>
+        <CardHeader><CardTitle>Resumo da Compra</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {order.items.map((item, index) => (
-              <div key={item.id || index} className="py-2 border-b last:border-b-0">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <p className="font-medium">{item.quantity}x {item.pizzaType?.name || 'Tipo Removido'} - {item.flavors?.map(f => f.name).join(' / ') || 'Sabor Removido'}</p>
-                        {item.observations && (<p className="text-sm text-gray-600">Obs: {item.observations}</p>)}
+            {order.items.map((item) => {
+                 const unitPrice = item.totalPrice / item.quantity;
+                 const isHalfAndHalf = item.flavors && item.flavors.length > 1;
+
+                return (
+                    <div key={item.id} className="py-4 border-b last:border-b-0">
+                        <div className="flex items-start space-x-4">
+                            {item.pizzaType?.imageUrl ? (
+                                <img src={`http://localhost:8090${item.pizzaType.imageUrl}`} alt={item.pizzaType.name} className="w-24 h-24 rounded-lg object-cover"/>
+                            ) : (
+                                <div className="w-24 h-24 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Pizza className="h-10 w-10" /></div>
+                            )}
+                            <div className="flex-1">
+                                <div className="flex justify-between items-start">
+                                    <h4 className="font-semibold text-lg text-gray-800">{item.quantity}x {item.pizzaType?.name || 'Item'}</h4>
+                                    <span className="font-bold text-lg text-gray-900">{formatPrice(item.totalPrice)}</span>
+                                </div>
+                                <p className="text-sm font-medium text-red-600 mb-3">{item.flavors?.map(f => f.name).join(' / ') || 'Sabor não encontrado'}</p>
+
+                                <div className="text-sm text-gray-600 space-y-1 border-l-2 border-red-200 pl-3">
+                                    <div className="flex justify-between">
+                                        <span><Pizza className="h-4 w-4 mr-2 inline-block text-gray-400"/>Valor Base</span>
+                                        <span>{formatPrice(item.pizzaType?.basePrice || 0)}</span>
+                                    </div>
+                                    {item.flavors?.map(flavor => (
+                                        <div key={flavor.id} className="flex justify-between">
+                                            <span><Star className="h-4 w-4 mr-2 inline-block text-gray-400"/>Sabor: {flavor.name} {isHalfAndHalf && "(Metade)"}</span>
+                                            <span>+ {formatPrice(isHalfAndHalf ? flavor.price / 2 : flavor.price)}</span>
+                                        </div>
+                                    ))}
+                                    {item.crust && item.crust.price > 0 && (
+                                        <div className="flex justify-between">
+                                            <span><Slice className="h-4 w-4 mr-2 inline-block text-gray-400"/>Borda: {item.crust.name}</span>
+                                            <span>+ {formatPrice(item.crust.price)}</span>
+                                        </div>
+                                    )}
+                                    {item.appliedExtras?.map(applied => (
+                                        <div key={applied.extra.id} className="flex justify-between">
+                                            <span className="pl-6">{applied.extra.name} {applied.onFlavor && `(Metade)`}</span>
+                                            <span>+ {formatPrice(applied.extra.price)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Separator className="my-2"/>
+                                <div className="flex justify-end font-semibold text-gray-800">
+                                    <span>Valor Unitário: {formatPrice(unitPrice)}</span>
+                                </div>
+
+                                {item.observations && <p className="text-sm mt-3 text-gray-800"><MessageSquare className="h-4 w-4 mr-2 inline-block text-gray-400"/><strong>Observações:</strong> {item.observations}</p>}
+                            </div>
+                        </div>
                     </div>
-                    <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
-                </div>
-                {/* --- SEÇÃO CORRIGIDA --- */}
-                {item.appliedExtras?.length > 0 && (
-                    <div className="text-sm text-gray-600 mt-1">
-                        + {item.appliedExtras.map(applied => 
-                            `${applied.extra.name} (${applied.onFlavor ? `Metade ${applied.onFlavor.name}` : 'Pizza Toda'})`
-                        ).join(", ")}
-                    </div>
-                )}
-              </div>
-            ))}
-            <div className="flex justify-between items-center pt-4 border-t font-semibold text-lg">
-              <span>Total:</span>
+                );
+            })}
+            <div className="flex justify-between items-center pt-4 border-t font-semibold text-xl">
+              <span>Total do Pedido:</span>
               <span>{formatPrice(order.totalAmount)}</span>
             </div>
           </div>
