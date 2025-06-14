@@ -20,7 +20,6 @@ public class OrderItem {
     @ManyToOne
     private PizzaType pizzaType;
 
-    // --- CÓDIGO MODIFICADO ---
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "order_item_flavors",
@@ -28,10 +27,17 @@ public class OrderItem {
             inverseJoinColumns = @JoinColumn(name = "flavor_id")
     )
     private List<PizzaFlavor> flavors;
-    // --- FIM DA MODIFICAÇÃO ---
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    private List<PizzaExtra> extras;
+    // --- CÓDIGO MODIFICADO ---
+    // Removemos a relação ManyToMany direta com PizzaExtra
+    // @ManyToMany(fetch = FetchType.EAGER)
+    // private List<PizzaExtra> extras;
+
+    // Adicionamos a nova relação com a entidade de ligação
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "order_item_id")
+    private List<OrderItemExtra> appliedExtras;
+    // --- FIM DA MODIFICAÇÃO ---
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "crust_id", nullable = true)

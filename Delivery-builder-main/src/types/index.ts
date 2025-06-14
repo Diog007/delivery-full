@@ -41,12 +41,18 @@ export interface PizzaExtra {
   price: number;
 }
 
+// Nova interface para representar um adicional e sua posição
+export interface AppliedExtra {
+  extra: PizzaExtra;
+  onFlavor: PizzaFlavor | null; // null significa pizza toda
+}
+
 export interface CartItem {
   id: string;
   pizzaType: PizzaType;
-  flavors: PizzaFlavor[]; // MODIFICADO DE flavor PARA flavors
+  flavors: PizzaFlavor[];
   crust: PizzaCrust | null;
-  extras: PizzaExtra[];
+  appliedExtras: AppliedExtra[]; // MODIFICADO de `extras`
   observations: string;
   quantity: number;
   totalPrice: number;
@@ -73,9 +79,21 @@ export interface Payment {
   cardType?: string;
 }
 
+// Interface para um item de pedido como vem da API
+interface OrderItemFromApi {
+    id: string;
+    pizzaType: PizzaType;
+    flavors: PizzaFlavor[];
+    appliedExtras: AppliedExtra[]; // MODIFICADO
+    crust: PizzaCrust | null;
+    observations: string;
+    quantity: number;
+    totalPrice: number;
+}
+
 export interface Order {
   id: string;
-  items: CartItem[];
+  items: OrderItemFromApi[]; // MODIFICADO
   customerUser: CustomerUserDto;
   deliveryType: DeliveryType;
   deliveryAddress?: DeliveryAddress;

@@ -31,9 +31,7 @@ export const CartItem = ({
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
-              <h3 className="font-semibold text-gray-900">
-                {item.pizzaType.name}
-              </h3>
+              <h3 className="font-semibold text-gray-900">{item.pizzaType.name}</h3>
               <Badge variant="secondary">{flavorNames}</Badge>
             </div>
 
@@ -43,78 +41,46 @@ export const CartItem = ({
 
             {item.crust && (
               <p className="text-sm text-gray-700 font-medium mb-2">
-                Borda: {item.crust.name}{" "}
-                <span className="text-gray-500 font-normal">
-                  (+{formatPrice(item.crust.price)})
-                </span>
+                Borda: {item.crust.name} <span className="text-gray-500 font-normal">(+{formatPrice(item.crust.price)})</span>
               </p>
             )}
 
-            {item.extras.length > 0 && (
+            {/* --- LÓGICA DE EXIBIÇÃO DE ADICIONAIS ATUALIZADA --- */}
+            {item.appliedExtras.length > 0 && (
               <div className="mb-2">
-                <p className="text-sm font-medium text-gray-700 mb-1">
-                  Adicionais:
-                </p>
+                <p className="text-sm font-medium text-gray-700 mb-1">Adicionais:</p>
                 <div className="flex flex-wrap gap-1">
-                  {item.extras.map((extra) => (
-                    <Badge key={extra.id} variant="outline" className="text-xs">
-                      {extra.name} (+{formatPrice(extra.price)})
+                  {item.appliedExtras.map((applied, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {applied.extra.name}
+                      <span className="text-gray-500 ml-1">
+                        ({applied.onFlavor ? `Metade ${applied.onFlavor.name}` : 'Pizza Toda'})
+                      </span>
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
+            {/* --- FIM DA ATUALIZAÇÃO --- */}
 
             {item.observations && (
               <div className="mb-2">
-                <p className="text-sm font-medium text-gray-700">
-                  Observações:
-                </p>
+                <p className="text-sm font-medium text-gray-700">Observações:</p>
                 <p className="text-sm text-gray-600">{item.observations}</p>
               </div>
             )}
 
-            <div className="text-sm text-gray-600">
-              Preço unitário: {formatPrice(unitPrice)}
-            </div>
+            <div className="text-sm text-gray-600">Preço unitário: {formatPrice(unitPrice)}</div>
           </div>
 
           <div className="flex flex-col items-end space-y-2 ml-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onRemove(item.id)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-
+            <Button variant="ghost" size="sm" onClick={() => onRemove(item.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                disabled={item.quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-
-              <span className="font-medium w-8 text-center">
-                {item.quantity}
-              </span>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}><Minus className="h-4 w-4" /></Button>
+              <span className="font-medium w-8 text-center">{item.quantity}</span>
+              <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
             </div>
-
-            <div className="font-semibold text-lg">
-              {formatPrice(item.totalPrice)}
-            </div>
+            <div className="font-semibold text-lg">{formatPrice(item.totalPrice)}</div>
           </div>
         </div>
       </CardContent>

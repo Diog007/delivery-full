@@ -130,14 +130,22 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
         <CardContent>
           <div className="space-y-4">
             {order.items.map((item, index) => (
-              <div key={item.id || index} className="flex justify-between items-center py-2 border-b last:border-b-0">
-                <div>
-                  {/* --- LINHA CORRIGIDA --- */}
-                  <p className="font-medium">{item.quantity}x {item.pizzaType?.name || 'Tipo Removido'} - {item.flavors?.map(f => f.name).join(' / ') || 'Sabor Removido'}</p>
-                  {item.extras?.length > 0 && (<p className="text-sm text-gray-600">+ {item.extras.map((e) => e.name).join(", ")}</p>)}
-                  {item.observations && (<p className="text-sm text-gray-600">Obs: {item.observations}</p>)}
+              <div key={item.id || index} className="py-2 border-b last:border-b-0">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <p className="font-medium">{item.quantity}x {item.pizzaType?.name || 'Tipo Removido'} - {item.flavors?.map(f => f.name).join(' / ') || 'Sabor Removido'}</p>
+                        {item.observations && (<p className="text-sm text-gray-600">Obs: {item.observations}</p>)}
+                    </div>
+                    <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
                 </div>
-                <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
+                {/* --- SEÇÃO CORRIGIDA --- */}
+                {item.appliedExtras?.length > 0 && (
+                    <div className="text-sm text-gray-600 mt-1">
+                        + {item.appliedExtras.map(applied => 
+                            `${applied.extra.name} (${applied.onFlavor ? `Metade ${applied.onFlavor.name}` : 'Pizza Toda'})`
+                        ).join(", ")}
+                    </div>
+                )}
               </div>
             ))}
             <div className="flex justify-between items-center pt-4 border-t font-semibold text-lg">

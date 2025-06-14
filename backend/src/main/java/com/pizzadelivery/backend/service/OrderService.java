@@ -44,12 +44,10 @@ public class OrderService {
             PizzaType pizzaType = pizzaTypeRepository.findById(itemDto.pizzaTypeId())
                     .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado: " + itemDto.pizzaTypeId()));
 
-            // --- LÓGICA MODIFICADA ---
             List<PizzaFlavor> flavors = pizzaFlavorRepository.findAllById(itemDto.flavorIds());
             if (flavors.isEmpty()) {
                 throw new RuntimeException("Pelo menos um sabor deve ser selecionado.");
             }
-            // --- FIM DA MODIFICAÇÃO ---
 
             PizzaCrust crust = null;
             if (itemDto.crustId() != null && !itemDto.crustId().isEmpty()) {
@@ -57,12 +55,29 @@ public class OrderService {
                         .orElseThrow(() -> new RuntimeException("Borda não encontrada: " + itemDto.crustId()));
             }
 
-            List<PizzaExtra> extras = pizzaExtraRepository.findAllById(itemDto.extraIds());
+            // --- LÓGICA MODIFICADA PARA ADICIONAIS ---
+            List<OrderItemExtra> appliedExtras = itemDto.extraSelections().stream().map(selection -> {
+                PizzaExtra extra = pizzaExtraRepository.findById(selection.extraId())
+                        .orElseThrow(() -> new RuntimeException("Adicional não encontrado: " + selection.extraId()));
+
+                PizzaFlavor appliedToFlavor = null;
+                if (selection.flavorId() != null) {
+                    appliedToFlavor = pizzaFlavorRepository.findById(selection.flavorId())
+                            .orElseThrow(() -> new RuntimeException("Sabor para o adicional não encontrado: " + selection.flavorId()));
+                }
+
+                return OrderItemExtra.builder()
+                        .extra(extra)
+                        .appliedToFlavor(appliedToFlavor)
+                        .build();
+            }).collect(Collectors.toList());
+            // --- FIM DA MODIFICAÇÃO ---
+
 
             return OrderItem.builder()
                     .pizzaType(pizzaType)
-                    .flavors(flavors) // MODIFICADO DE flavor PARA flavors
-                    .extras(extras)
+                    .flavors(flavors)
+                    .appliedExtras(appliedExtras) // MODIFICADO
                     .crust(crust)
                     .observations(itemDto.observations())
                     .quantity(itemDto.quantity())

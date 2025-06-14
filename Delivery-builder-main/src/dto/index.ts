@@ -1,10 +1,16 @@
 import { DeliveryAddress, DeliveryType, OrderStatus, Payment } from "@/types";
 
 export namespace OrderDtos {
+  // Novo DTO para seleção de extra
+  export interface ExtraSelectionDto {
+    extraId: string;
+    flavorId: string | null;
+  }
+
   export interface CartItemRequestDto {
     pizzaTypeId: string;
-    flavorIds: string[]; // MODIFICADO DE flavorId PARA flavorIds
-    extraIds: string[];
+    flavorIds: string[];
+    extraSelections: ExtraSelectionDto[]; // MODIFICADO de extraIds
     crustId: string | null;
     observations: string;
     quantity: number;
@@ -71,7 +77,7 @@ export namespace MenuDtos {
         price: number;
         pizzaTypeIds: string[];
     }
-    
+
     export interface FlavorUpdateRequest {
         name: string;
         description: string;

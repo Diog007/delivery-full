@@ -11,10 +11,16 @@ public class OrderDtos {
 
     public record OrderStatusUpdate(OrderStatus status) {}
 
+    // DTO para representar a seleção de um adicional
+    public record ExtraSelectionDto(
+            String extraId,
+            String flavorId // Pode ser nulo se o adicional for na pizza toda
+    ) {}
+
     public record CartItemRequestDto(
             String pizzaTypeId,
-            List<String> flavorIds, // MODIFICADO DE flavorId PARA flavorIds
-            List<String> extraIds,
+            List<String> flavorIds,
+            List<ExtraSelectionDto> extraSelections, // MODIFICADO
             String crustId,
             String observations,
             int quantity,

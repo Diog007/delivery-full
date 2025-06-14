@@ -12,16 +12,26 @@ public class OrderMapper {
         }
 
         var itemDtos = order.getItems().stream()
-                .map(item -> new ResponseDtos.OrderItemDto(
-                        item.getId(),
-                        item.getPizzaType(),
-                        item.getFlavors(), // MODIFICADO DE getFlavor PARA getFlavors
-                        item.getExtras(),
-                        item.getCrust(),
-                        item.getObservations(),
-                        item.getQuantity(),
-                        item.getTotalPrice()
-                )).collect(Collectors.toList());
+                .map(item -> {
+                    // Mapeia os adicionais aplicados
+                    var appliedExtrasDto = item.getAppliedExtras().stream()
+                            .map(appliedExtra -> new ResponseDtos.AppliedExtraDto(
+                                    appliedExtra.getExtra(),
+                                    appliedExtra.getAppliedToFlavor()
+                            ))
+                            .collect(Collectors.toList());
+
+                    return new ResponseDtos.OrderItemDto(
+                            item.getId(),
+                            item.getPizzaType(),
+                            item.getFlavors(),
+                            appliedExtrasDto, // MODIFICADO
+                            item.getCrust(),
+                            item.getObservations(),
+                            item.getQuantity(),
+                            item.getTotalPrice()
+                    );
+                }).collect(Collectors.toList());
 
         var customerDto = new ResponseDtos.CustomerUserDto(
                 order.getCustomerUser().getId(),

@@ -73,16 +73,24 @@ export const Checkout = () => {
 
         setIsLoading(true);
         try {
-            // --- CORREÇÃO PRINCIPAL AQUI ---
-            const itemsForApi: OrderDtos.CartItemRequestDto[] = items.map(item => ({
-                pizzaTypeId: item.pizzaType.id,
-                flavorIds: item.flavors.map(flavor => flavor.id), // Corrigido para usar a lista de sabores
-                extraIds: item.extras.map(extra => extra.id),
-                crustId: item.crust?.id || null, // Adicionado crustId
-                observations: item.observations,
-                quantity: item.quantity,
-                totalPrice: item.totalPrice,
-            }));
+            // --- CÓDIGO CORRIGIDO ---
+            const itemsForApi: OrderDtos.CartItemRequestDto[] = items.map(item => {
+                // Mapeia a nova estrutura de `appliedExtras` para o DTO que a API espera
+                const extraSelections: OrderDtos.ExtraSelectionDto[] = item.appliedExtras.map(applied => ({
+                    extraId: applied.extra.id,
+                    flavorId: applied.onFlavor?.id || null,
+                }));
+
+                return {
+                    pizzaTypeId: item.pizzaType.id,
+                    flavorIds: item.flavors.map(flavor => flavor.id),
+                    extraSelections: extraSelections, // Usa a nova estrutura mapeada
+                    crustId: item.crust?.id || null,
+                    observations: item.observations,
+                    quantity: item.quantity,
+                    totalPrice: item.totalPrice,
+                };
+            });
             
             const orderData: CreateOrderDto = {
                 items: itemsForApi,
