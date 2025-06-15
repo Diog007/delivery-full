@@ -21,6 +21,7 @@ import { Cart } from "@/pages/client/Cart";
 import { Checkout } from "@/pages/client/Checkout";
 import { OrderTracking } from "@/pages/client/OrderTracking";
 import { MyOrders } from "./pages/client/MyOrders";
+import { BeveragePage } from "./pages/client/BeveragePage"; // Importa a nova página
 
 // Admin Pages
 import { AdminLogin } from "@/pages/admin/Login";
@@ -47,6 +48,7 @@ const App = () => (
                 <Routes>
                   {/* --- Rotas de Cliente --- */}
                   <Route path="/" element={<HomePage />} />
+                  <Route path="/beverages" element={<BeveragePage />} /> {/* Adiciona a rota de bebidas */}
                   <Route path="/customize" element={<PizzaCustomization />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />

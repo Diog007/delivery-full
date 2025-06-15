@@ -1,8 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingCart, Pizza, Phone, MapPin, ChevronDown } from "lucide-react";
+import { ShoppingCart, Pizza, Phone, MapPin, ChevronDown, GlassWater } from "lucide-react";
 
-// --- NOVAS IMPORTAÇÕES ---
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { LoginModal } from "./LoginModal";
 import { 
@@ -11,7 +10,6 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "./ui/dropdown-menu";
-// --- FIM DAS NOVAS IMPORTAÇÕES ---
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,19 +25,16 @@ export const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const totalItems = getTotalItems();
 
-  // --- NOVA LÓGICA E ESTADOS ---
   const { isAuthenticated, customerName, logout } = useCustomerAuth();
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate("/"); // Redireciona para a home após o logout
+    navigate("/");
   };
-  // --- FIM DA NOVA LÓGICA ---
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* O Modal de Login é renderizado aqui mas só fica visível quando ativado */}
       <LoginModal open={isLoginModalOpen} setOpen={setLoginModalOpen} />
 
       <header className="bg-red-600 shadow-lg sticky top-0 z-50">
@@ -53,11 +48,22 @@ export const Layout = ({ children }: LayoutProps) => {
             <nav className="hidden md:flex items-center space-x-6">
               <Link
                 to="/"
-                className={`text-white hover:text-red-200 transition-colors ${
+                className={`flex items-center text-white hover:text-red-200 transition-colors ${
                   location.pathname === "/" ? "border-b-2 border-white pb-1" : ""
                 }`}
               >
+                <Pizza className="h-4 w-4 mr-2"/>
                 Cardápio
+              </Link>
+              {/* --- BOTÃO BEBIDAS ADICIONADO --- */}
+              <Link
+                to="/beverages"
+                className={`flex items-center text-white hover:text-red-200 transition-colors ${
+                  location.pathname === "/beverages" ? "border-b-2 border-white pb-1" : ""
+                }`}
+              >
+                <GlassWater className="h-4 w-4 mr-2"/>
+                Bebidas
               </Link>
               <Link
                 to={isAuthenticated ? "/my-orders" : "/tracking"}
@@ -70,7 +76,6 @@ export const Layout = ({ children }: LayoutProps) => {
             </nav>
 
             <div className="flex items-center space-x-4">
-              {/* --- LÓGICA CONDICIONAL DE LOGIN --- */}
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -93,7 +98,6 @@ export const Layout = ({ children }: LayoutProps) => {
                   Entrar / Criar Conta
                 </Button>
               )}
-              {/* --- FIM DA LÓGICA CONDICIONAL --- */}
 
               <Link to="/cart">
                 <Button
@@ -118,7 +122,6 @@ export const Layout = ({ children }: LayoutProps) => {
 
       <footer className="bg-gray-800 text-white py-8 mt-12">
         <div className="container mx-auto px-4">
-            {/* O conteúdo do footer permanece o mesmo */}
             <div className="grid md:grid-cols-3 gap-8">
                 <div>
                     <div className="flex items-center space-x-2 mb-4"><Pizza className="h-6 w-6" /><h3 className="text-lg font-semibold">PizzaExpress</h3></div>

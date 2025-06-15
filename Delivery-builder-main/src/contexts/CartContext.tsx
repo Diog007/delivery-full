@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { CartItem, PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust, AppliedExtra } from "@/types";
+import { CartItem, PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust, AppliedExtra, Beverage } from "@/types";
 
 interface CartContextType {
   items: CartItem[];
@@ -11,6 +11,7 @@ interface CartContextType {
     observations: string,
     quantity: number,
   ) => void;
+  addBeverageToCart: (beverage: Beverage, quantity: number) => void;
   removeItem: (id: string) => void;
   updateItemQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -58,7 +59,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     // --- FIM DA LÓGICA DE CÁLCULO ---
 
     const newItem: CartItem = {
-      id: Date.now().toString(),
+      id: `pizza-${Date.now()}`,
+      type: 'pizza',
+      name: `${pizzaType.name} (${flavors.map(f => f.name).join(' / ')})`,
       pizzaType,
       flavors,
       crust,
@@ -68,6 +71,19 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       totalPrice,
     };
 
+    setItems((prev) => [...prev, newItem]);
+  };
+
+  const addBeverageToCart = (beverage: Beverage, quantity: number) => {
+    const newItem: CartItem = {
+        id: `beverage-${beverage.id}-${Date.now()}`,
+        type: 'beverage',
+        name: beverage.name,
+        beverage: beverage,
+        observations: '',
+        quantity: quantity,
+        totalPrice: beverage.price * quantity,
+    };
     setItems((prev) => [...prev, newItem]);
   };
 
@@ -109,6 +125,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       value={{
         items,
         addItem,
+        addBeverageToCart,
         removeItem,
         updateItemQuantity,
         clearCart,

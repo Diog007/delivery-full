@@ -1,4 +1,4 @@
-import { Admin, DashboardStats, DailySale, SalesByPizzaType, Order, OrderStatus, PizzaExtra, PizzaFlavor, PizzaType, Customer, Address, PizzaCrust } from "@/types";
+import { Admin, DashboardStats, DailySale, SalesByPizzaType, Order, OrderStatus, PizzaExtra, PizzaFlavor, PizzaType, Customer, Address, PizzaCrust, Beverage } from "@/types";
 import { AuthDtos, OrderDtos, CustomerDtos, MenuDtos } from "@/dto";
 
 const API_BASE_URL = 'http://localhost:8090/api';
@@ -48,6 +48,7 @@ const publicApi = {
   getOrderById: (id: string) => baseRequest<Order>(`/orders/${id}`),
   getAllCrusts: () => baseRequest<PizzaCrust[]>('/menu/crusts'),
   getCrustsForType: (typeId: string) => baseRequest<PizzaCrust[]>(`/menu/types/${typeId}/crusts`),
+  getBeverages: () => baseRequest<Beverage[]>('/menu/beverages'),
 };
 
 const customerApi = {
@@ -97,6 +98,14 @@ const adminApi = {
   
   updateAddress: (id: string, data: Address) => baseRequest<Address>(`/admin/addresses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteAddress: (id: string) => baseRequest<void>(`/admin/addresses/${id}`, { method: 'DELETE' }),
+  createBeverage: (data: Partial<Beverage>) => baseRequest<Beverage>('/admin/beverages', { method: 'POST', body: JSON.stringify(data) }),
+  updateBeverage: (id: string, data: Partial<Beverage>) => baseRequest<Beverage>(`/admin/beverages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  uploadBeverageImage: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return baseRequest<Beverage>(`/admin/beverages/${id}/image`, { method: 'POST', body: formData });
+  },
+  deleteBeverage: (id: string) => baseRequest<void>(`/admin/beverages/${id}`, { method: 'DELETE' }),
 };
 
 export const api = {

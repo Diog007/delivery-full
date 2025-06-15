@@ -1,5 +1,6 @@
 package com.pizzadelivery.backend.controller;
 
+import com.pizzadelivery.backend.entity.Beverage;
 import com.pizzadelivery.backend.entity.PizzaCrust;
 import com.pizzadelivery.backend.entity.PizzaExtra;
 import com.pizzadelivery.backend.entity.PizzaFlavor;
@@ -7,7 +8,11 @@ import com.pizzadelivery.backend.entity.PizzaType;
 import com.pizzadelivery.backend.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -43,6 +48,12 @@ public class MenuController {
     @GetMapping("/crusts")
     public ResponseEntity<List<PizzaCrust>> getAllCrusts() {
         return ResponseEntity.ok(menuService.getAllCrusts());
+    }
+
+    // --- NOVO ENDPOINT PARA BEBIDAS ---
+    @GetMapping("/beverages")
+    public ResponseEntity<List<Beverage>> getAllBeverages() {
+        return ResponseEntity.ok(menuService.getAllBeverages());
     }
 
     @GetMapping("/types/{typeId}/crusts")

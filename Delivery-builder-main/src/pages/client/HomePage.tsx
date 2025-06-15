@@ -14,7 +14,6 @@ export const HomePage = () => {
     const fetchTypes = async () => {
       try {
         const types = await api.public.getPizzaTypes();
-        // Garante que a resposta seja um array antes de setar o estado
         if (Array.isArray(types)) {
           setPizzaTypes(types);
         } else {
@@ -22,7 +21,7 @@ export const HomePage = () => {
         }
       } catch (error) {
         console.error("Failed to fetch pizza types:", error);
-        setPizzaTypes([]); // Define como vazio em caso de erro
+        setPizzaTypes([]);
       }
     };
     fetchTypes();

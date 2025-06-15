@@ -41,6 +41,14 @@ export interface PizzaExtra {
   price: number;
 }
 
+export interface Beverage {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl?: string;
+}
+
 // Nova interface para representar um adicional e sua posição
 export interface AppliedExtra {
   extra: PizzaExtra;
@@ -49,10 +57,13 @@ export interface AppliedExtra {
 
 export interface CartItem {
   id: string;
-  pizzaType: PizzaType;
-  flavors: PizzaFlavor[];
-  crust: PizzaCrust | null;
-  appliedExtras: AppliedExtra[]; // MODIFICADO de `extras`
+  type: 'pizza' | 'beverage'; // Para diferenciar os itens no carrinho
+  name: string; // Um nome geral para exibição no carrinho
+  pizzaType?: PizzaType;
+  flavors?: PizzaFlavor[];
+  crust?: PizzaCrust | null;
+  appliedExtras?: AppliedExtra[]; 
+  beverage?: Beverage; // Adiciona a opção de ter uma bebida
   observations: string;
   quantity: number;
   totalPrice: number;

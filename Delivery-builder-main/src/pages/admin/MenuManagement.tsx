@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Pizza, Package, Star, Slice } from "lucide-react";
-import { PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust } from "@/types";
+import { Plus, Edit, Trash2, Pizza, Package, Star, Slice, GlassWater } from "lucide-react";
+import { PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust, Beverage } from "@/types";
 import { api } from "@/services/apiService";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -221,6 +221,7 @@ const ExtraDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
     }, [editingItem, open, pizzaTypes]);
 
     const handleTypeChange = (typeId: string, checked: boolean) => {
+        // CORREÇÃO APLICADA AQUI
         setSelectedTypeIds(prev => { const newSet = new Set(prev); if (checked) newSet.add(typeId); else newSet.delete(typeId); return newSet; });
     };
 
@@ -281,6 +282,7 @@ const CrustDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
     }, [editingItem, open, pizzaTypes]);
 
     const handleTypeChange = (typeId: string, checked: boolean) => {
+        // CORREÇÃO APLICADA AQUI
         setSelectedTypeIds(prev => { const newSet = new Set(prev); if (checked) newSet.add(typeId); else newSet.delete(typeId); return newSet; });
     };
 
@@ -321,12 +323,67 @@ const CrustDialog = ({ open, setOpen, editingItem, onSave, pizzaTypes }) => {
     );
 };
 
+const BeverageDialog = ({ open, setOpen, editingItem, onSave }) => {
+    const [formData, setFormData] = useState({ name: "", description: "", price: 0 });
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            if (editingItem) {
+                setFormData({ name: editingItem.name, description: editingItem.description, price: editingItem.price });
+            } else {
+                setFormData({ name: "", description: "", price: 0 });
+            }
+            setImageFile(null);
+        }
+    }, [editingItem, open]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        try {
+            let savedBeverage;
+            if (editingItem) {
+                savedBeverage = await api.admin.updateBeverage(editingItem.id, formData);
+            } else {
+                savedBeverage = await api.admin.createBeverage(formData);
+            }
+            if (imageFile && savedBeverage) {
+                await api.admin.uploadBeverageImage(savedBeverage.id, imageFile);
+            }
+            onSave();
+        } catch (error) {
+            console.error("Failed to save beverage", error);
+            alert("Erro ao salvar bebida: " + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent>
+                <DialogHeader><DialogTitle>{editingItem ? "Editar Bebida" : "Nova Bebida"}</DialogTitle></DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div><Label htmlFor="beverageName">Nome</Label><Input id="beverageName" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required /></div>
+                    <div><Label htmlFor="beverageDescription">Descrição</Label><Textarea id="beverageDescription" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} required /></div>
+                    <div><Label htmlFor="beveragePrice">Preço (R$)</Label><Input id="beveragePrice" type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})} required /></div>
+                    <div><Label htmlFor="beverageImage">Imagem</Label><Input id="beverageImage" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} /></div>
+                    <div className="flex justify-end space-x-2 pt-4"><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancelar</Button><Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar'}</Button></div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 
 export const MenuManagement = () => {
     const [pizzaTypes, setPizzaTypes] = useState<PizzaType[]>([]);
     const [pizzaFlavors, setPizzaFlavors] = useState<PizzaFlavor[]>([]);
     const [pizzaExtras, setPizzaExtras] = useState<PizzaExtra[]>([]);
     const [pizzaCrusts, setPizzaCrusts] = useState<PizzaCrust[]>([]);
+    const [beverages, setBeverages] = useState<Beverage[]>([]);
 
     const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
     const [editingType, setEditingType] = useState<PizzaType | null>(null);
@@ -336,19 +393,23 @@ export const MenuManagement = () => {
     const [editingExtra, setEditingExtra] = useState<PizzaExtra | null>(null);
     const [isCrustDialogOpen, setIsCrustDialogOpen] = useState(false);
     const [editingCrust, setEditingCrust] = useState<PizzaCrust | null>(null);
+    const [isBeverageDialogOpen, setIsBeverageDialogOpen] = useState(false);
+    const [editingBeverage, setEditingBeverage] = useState<Beverage | null>(null);
 
     const loadData = useCallback(async () => {
         try {
-            const [types, flavors, extras, crusts] = await Promise.all([
+            const [types, flavors, extras, crusts, drinks] = await Promise.all([
                 api.public.getPizzaTypes(),
                 api.public.getPizzaFlavors(),
                 api.public.getPizzaExtras(),
                 api.public.getAllCrusts(),
+                api.public.getBeverages(),
             ]);
             setPizzaTypes(Array.isArray(types) ? types : []);
             setPizzaFlavors(Array.isArray(flavors) ? flavors : []);
             setPizzaExtras(Array.isArray(extras) ? extras : []);
             setPizzaCrusts(Array.isArray(crusts) ? crusts : []);
+            setBeverages(Array.isArray(drinks) ? drinks : []);
         } catch (error) { console.error("Failed to load menu data", error); }
     }, []);
 
@@ -359,6 +420,7 @@ export const MenuManagement = () => {
         setIsFlavorDialogOpen(false); setEditingFlavor(null);
         setIsExtraDialogOpen(false); setEditingExtra(null);
         setIsCrustDialogOpen(false); setEditingCrust(null);
+        setIsBeverageDialogOpen(false); setEditingBeverage(null);
         loadData();
     };
 
@@ -383,6 +445,11 @@ export const MenuManagement = () => {
             edit: (item) => { setEditingCrust(item); setIsCrustDialogOpen(true); },
             delete: async (id) => { if (window.confirm("Tem certeza?")) { try { await api.admin.deletePizzaCrust(id); loadData(); } catch (error) { alert("Falha ao excluir."); } } },
         },
+        beverage: {
+            new: () => { setEditingBeverage(null); setIsBeverageDialogOpen(true); },
+            edit: (item) => { setEditingBeverage(item); setIsBeverageDialogOpen(true); },
+            delete: async (id) => { if (window.confirm("Tem certeza?")) { try { await api.admin.deleteBeverage(id); loadData(); } catch (error) { alert("Falha ao excluir."); } } },
+        },
     };
 
     return (
@@ -395,6 +462,7 @@ export const MenuManagement = () => {
                         <TabsTrigger value="flavors"><Star className="h-4 w-4 mr-2" />Sabores</TabsTrigger>
                         <TabsTrigger value="crusts"><Slice className="h-4 w-4 mr-2" />Bordas</TabsTrigger>
                         <TabsTrigger value="extras"><Package className="h-4 w-4 mr-2" />Adicionais</TabsTrigger>
+                        <TabsTrigger value="beverages"><GlassWater className="h-4 w-4 mr-2" />Bebidas</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="types">
@@ -476,12 +544,35 @@ export const MenuManagement = () => {
                         </CardContent>
                       </Card>
                     </TabsContent>
+
+                    <TabsContent value="beverages">
+                      <Card>
+                        <CardHeader className="flex-row justify-between items-center"><CardTitle>Bebidas</CardTitle><Button onClick={actions.beverage.new} className="bg-red-600 hover:bg-red-700"><Plus className="h-4 w-4 mr-2" />Nova Bebida</Button></CardHeader>
+                        <CardContent className="grid gap-4">
+                          {beverages.map((item) => (
+                            <div key={item.id} className="flex items-center p-4 border rounded-lg">
+                              {item.imageUrl ? (<img src={`http://localhost:8090${item.imageUrl}`} alt={item.name} className="w-20 h-20 rounded-md object-cover mr-4" />) : (<div className="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 mr-4 flex-shrink-0"><GlassWater className="h-8 w-8" /></div>)}
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg">{item.name}</h3>
+                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                <Badge variant="secondary" className="mt-2">{formatPrice(item.price)}</Badge>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button variant="outline" size="icon" onClick={() => actions.beverage.edit(item)}><Edit className="h-4 w-4" /></Button>
+                                <Button variant="destructive" size="icon" onClick={() => actions.beverage.delete(item.id)}><Trash2 className="h-4 w-4" /></Button>
+                              </div>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
                 </Tabs>
   
                 <TypeDialog open={isTypeDialogOpen} setOpen={setIsTypeDialogOpen} editingItem={editingType} onSave={handleSave} pizzaExtras={pizzaExtras} pizzaCrusts={pizzaCrusts}/>
                 <FlavorDialog open={isFlavorDialogOpen} setOpen={setIsFlavorDialogOpen} editingItem={editingFlavor} onSave={handleSave} pizzaTypes={pizzaTypes} />
                 <ExtraDialog open={isExtraDialogOpen} setOpen={setIsExtraDialogOpen} editingItem={editingExtra} onSave={handleSave} pizzaTypes={pizzaTypes} />
                 <CrustDialog open={isCrustDialogOpen} setOpen={setIsCrustDialogOpen} editingItem={editingCrust} onSave={handleSave} pizzaTypes={pizzaTypes}/>
+                <BeverageDialog open={isBeverageDialogOpen} setOpen={setIsBeverageDialogOpen} editingItem={editingBeverage} onSave={handleSave} />
             </div>
         </AdminLayout>
     );

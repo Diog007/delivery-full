@@ -1,10 +1,12 @@
 package com.pizzadelivery.backend.service;
 
 import com.pizzadelivery.backend.dto.MenuDtos;
+import com.pizzadelivery.backend.entity.Beverage;
 import com.pizzadelivery.backend.entity.PizzaCrust;
 import com.pizzadelivery.backend.entity.PizzaExtra;
 import com.pizzadelivery.backend.entity.PizzaFlavor;
 import com.pizzadelivery.backend.entity.PizzaType;
+import com.pizzadelivery.backend.repository.BeverageRepository;
 import com.pizzadelivery.backend.repository.PizzaCrustRepository;
 import com.pizzadelivery.backend.repository.PizzaExtraRepository;
 import com.pizzadelivery.backend.repository.PizzaFlavorRepository;
@@ -27,6 +29,7 @@ public class MenuService {
     private final PizzaFlavorRepository pizzaFlavorRepo;
     private final PizzaExtraRepository pizzaExtraRepo;
     private final PizzaCrustRepository pizzaCrustRepo;
+    private final BeverageRepository beverageRepo;
     private final FileStorageService fileStorageService;
 
 
@@ -34,6 +37,7 @@ public class MenuService {
     public List<PizzaFlavor> getAllFlavors() { return pizzaFlavorRepo.findAll(); }
     public List<PizzaExtra> getAllExtras() { return pizzaExtraRepo.findAll(); }
     public List<PizzaCrust> getAllCrusts() { return pizzaCrustRepo.findAll(); }
+    public List<Beverage> getAllBeverages() { return beverageRepo.findAll(); }
 
     @Transactional
     public PizzaType saveType(PizzaType type) {
@@ -251,5 +255,33 @@ public class MenuService {
         associations.forEach(type -> type.getAvailableCrusts().removeIf(c -> c.getId().equals(id)));
         pizzaTypeRepo.saveAll(associations);
         pizzaCrustRepo.deleteById(id);
+    }
+
+    // --- MÉTODOS PARA BEBIDAS ---
+    @Transactional
+    public Beverage saveBeverage(Beverage beverage) {
+        return beverageRepo.save(beverage);
+    }
+
+    @Transactional
+    public Beverage updateBeverage(String id, Beverage beverageDetails) {
+        Beverage beverage = beverageRepo.findById(id).orElseThrow(() -> new RuntimeException("Bebida não encontrada"));
+        beverage.setName(beverageDetails.getName());
+        beverage.setDescription(beverageDetails.getDescription());
+        beverage.setPrice(beverageDetails.getPrice());
+        return beverageRepo.save(beverage);
+    }
+
+    @Transactional
+    public Beverage saveBeverageImage(String beverageId, MultipartFile file) {
+        Beverage beverage = beverageRepo.findById(beverageId)
+                .orElseThrow(() -> new RuntimeException("Bebida não encontrada com o id: " + beverageId));
+        String imageUrl = fileStorageService.storeFile(file);
+        beverage.setImageUrl(imageUrl);
+        return beverageRepo.save(beverage);
+    }
+
+    public void deleteBeverage(String id) {
+        beverageRepo.deleteById(id);
     }
 }

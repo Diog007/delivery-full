@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, Pizza, GlassWater } from "lucide-react";
 import { CartItem as CartItemType } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { Separator } from "./ui/separator";
@@ -16,8 +16,42 @@ export const CartItem = ({
   onUpdateQuantity,
   onRemove,
 }: CartItemProps) => {
+
+  if (item.type === 'beverage' && item.beverage) {
+    return (
+      <Card className="mb-4 shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center gap-4">
+              {item.beverage.imageUrl ? (
+                <img src={`http://localhost:8090${item.beverage.imageUrl}`} alt={item.name} className="w-16 h-16 rounded-lg object-cover"/>
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                    <GlassWater className="h-8 w-8" />
+                </div>
+              )}
+              <div>
+                <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
+                <p className="text-sm text-red-600">{formatPrice(item.totalPrice / item.quantity)} / un.</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end space-y-2">
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}><Minus className="h-4 w-4" /></Button>
+                <span className="font-bold w-8 text-center text-lg">{item.quantity}</span>
+                <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
+              </div>
+              <p className="font-bold text-xl text-gray-900 mt-2">{formatPrice(item.totalPrice)}</p>
+              <Button variant="ghost" size="sm" onClick={() => onRemove(item.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const unitPrice = item.totalPrice / item.quantity;
-  const isHalfAndHalf = item.flavors.length > 1;
+  const isHalfAndHalf = item.flavors && item.flavors.length > 1;
 
   return (
     <Card className="mb-4 shadow-sm">
@@ -26,9 +60,9 @@ export const CartItem = ({
           {/* Coluna de Detalhes da Pizza e Preços */}
           <div className="flex-1 space-y-3">
             <div>
-              <h3 className="font-semibold text-lg text-gray-900">{item.pizzaType.name}</h3>
+              <h3 className="font-semibold text-lg text-gray-900">{item.pizzaType?.name}</h3>
               <p className="text-sm font-medium text-red-600">
-                {item.flavors.map(f => f.name).join(' / ')}
+                {item.flavors?.map(f => f.name).join(' / ')}
               </p>
             </div>
 
@@ -37,9 +71,9 @@ export const CartItem = ({
                 <p className="font-semibold text-gray-700 mb-1">Detalhes do Preço Unitário:</p>
                 <div className="flex justify-between items-center text-gray-600">
                     <span>Pizza Base</span>
-                    <span>{formatPrice(item.pizzaType.basePrice)}</span>
+                    <span>{formatPrice(item.pizzaType?.basePrice || 0)}</span>
                 </div>
-                {item.flavors.map(flavor => (
+                {item.flavors?.map(flavor => (
                     <div key={flavor.id} className="flex justify-between items-center text-gray-600">
                         <span>Sabor: {flavor.name} {isHalfAndHalf && '(1/2)'}</span>
                         <span>+ {formatPrice(isHalfAndHalf ? flavor.price / 2 : flavor.price)}</span>
@@ -52,7 +86,7 @@ export const CartItem = ({
                     </div>
                 )}
                 {/* --- TRECHO MODIFICADO --- */}
-                {item.appliedExtras.map((applied, index) => (
+                {item.appliedExtras?.map((applied, index) => (
                     <div key={index} className="flex justify-between items-center text-gray-600">
                        <span>
                          Adicional: {applied.extra.name}

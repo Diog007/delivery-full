@@ -152,4 +152,26 @@ public class AdminController {
         menuService.deleteCrust(id);
         return ResponseEntity.noContent().build();
     }
+
+    // --- BEBIDAS (NOVO) ---
+    @PostMapping("/beverages")
+    public ResponseEntity<Beverage> createBeverage(@RequestBody Beverage beverage) {
+        return new ResponseEntity<>(menuService.saveBeverage(beverage), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/beverages/{id}")
+    public ResponseEntity<Beverage> updateBeverage(@PathVariable String id, @RequestBody Beverage beverage) {
+        return ResponseEntity.ok(menuService.updateBeverage(id, beverage));
+    }
+
+    @PostMapping("/beverages/{id}/image")
+    public ResponseEntity<Beverage> uploadBeverageImage(@PathVariable String id, @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(menuService.saveBeverageImage(id, file));
+    }
+
+    @DeleteMapping("/beverages/{id}")
+    public ResponseEntity<Void> deleteBeverage(@PathVariable String id) {
+        menuService.deleteBeverage(id);
+        return ResponseEntity.noContent().build();
+    }
 }
