@@ -1,21 +1,31 @@
 import { DeliveryAddress, DeliveryType, OrderStatus, Payment } from "@/types";
 
 export namespace OrderDtos {
-  // Novo DTO para seleção de extra
   export interface ExtraSelectionDto {
     extraId: string;
     flavorId: string | null;
   }
 
-  export interface CartItemRequestDto {
+  export interface PizzaCartItemRequestDto {
+    itemType: "PIZZA";
     pizzaTypeId: string;
     flavorIds: string[];
-    extraSelections: ExtraSelectionDto[]; // MODIFICADO de extraIds
+    extraSelections: ExtraSelectionDto[]; 
     crustId: string | null;
     observations: string;
     quantity: number;
     totalPrice: number;
   }
+
+  export interface BeverageCartItemRequestDto {
+    itemType: "BEVERAGE";
+    beverageId: string;
+    observations: string;
+    quantity: number;
+    totalPrice: number;
+  }
+
+  export type CartItemRequestDto = PizzaCartItemRequestDto | BeverageCartItemRequestDto;
 
   export interface CreateOrderDto {
     items: CartItemRequestDto[];
@@ -83,5 +93,13 @@ export namespace MenuDtos {
         description: string;
         price: number;
         pizzaTypeIds: string[];
+    }
+
+    export interface BeverageRequestDto { // <-- MODIFIQUE ESTE DTO
+        name: string;
+        description: string;
+        price: number;
+        alcoholic: boolean;
+        categoryId: string;
     }
 }

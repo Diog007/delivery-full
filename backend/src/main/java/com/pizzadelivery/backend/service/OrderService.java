@@ -1,8 +1,12 @@
 package com.pizzadelivery.backend.service;
 
 import com.pizzadelivery.backend.dto.OrderDtos;
+import com.pizzadelivery.backend.dto.OrderDtos.BeverageCartItemRequestDto;
+import com.pizzadelivery.backend.dto.OrderDtos.CartItemRequestDto;
+import com.pizzadelivery.backend.dto.OrderDtos.PizzaCartItemRequestDto;
 import com.pizzadelivery.backend.entity.*;
 import com.pizzadelivery.backend.enums.DeliveryType;
+import com.pizzadelivery.backend.enums.OrderItemType;
 import com.pizzadelivery.backend.enums.OrderStatus;
 import com.pizzadelivery.backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,7 @@ public class OrderService {
     private final PizzaCrustRepository pizzaCrustRepository;
     private final CustomerUserRepository customerUserRepository;
     private final AddressRepository addressRepository;
+    private final BeverageRepository beverageRepository; // NOVO
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -41,48 +46,12 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Cliente com email " + userEmail + " não encontrado."));
 
         List<OrderItem> orderItems = orderDto.items().stream().map(itemDto -> {
-            PizzaType pizzaType = pizzaTypeRepository.findById(itemDto.pizzaTypeId())
-                    .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado: " + itemDto.pizzaTypeId()));
-
-            List<PizzaFlavor> flavors = pizzaFlavorRepository.findAllById(itemDto.flavorIds());
-            if (flavors.isEmpty()) {
-                throw new RuntimeException("Pelo menos um sabor deve ser selecionado.");
+            if (itemDto.getItemType() == OrderItemType.PIZZA) {
+                return createPizzaOrderItem((PizzaCartItemRequestDto) itemDto);
+            } else if (itemDto.getItemType() == OrderItemType.BEVERAGE) {
+                return createBeverageOrderItem((BeverageCartItemRequestDto) itemDto);
             }
-
-            PizzaCrust crust = null;
-            if (itemDto.crustId() != null && !itemDto.crustId().isEmpty()) {
-                crust = pizzaCrustRepository.findById(itemDto.crustId())
-                        .orElseThrow(() -> new RuntimeException("Borda não encontrada: " + itemDto.crustId()));
-            }
-
-            // --- LÓGICA MODIFICADA PARA ADICIONAIS ---
-            List<OrderItemExtra> appliedExtras = itemDto.extraSelections().stream().map(selection -> {
-                PizzaExtra extra = pizzaExtraRepository.findById(selection.extraId())
-                        .orElseThrow(() -> new RuntimeException("Adicional não encontrado: " + selection.extraId()));
-
-                PizzaFlavor appliedToFlavor = null;
-                if (selection.flavorId() != null) {
-                    appliedToFlavor = pizzaFlavorRepository.findById(selection.flavorId())
-                            .orElseThrow(() -> new RuntimeException("Sabor para o adicional não encontrado: " + selection.flavorId()));
-                }
-
-                return OrderItemExtra.builder()
-                        .extra(extra)
-                        .appliedToFlavor(appliedToFlavor)
-                        .build();
-            }).collect(Collectors.toList());
-            // --- FIM DA MODIFICAÇÃO ---
-
-
-            return OrderItem.builder()
-                    .pizzaType(pizzaType)
-                    .flavors(flavors)
-                    .appliedExtras(appliedExtras) // MODIFICADO
-                    .crust(crust)
-                    .observations(itemDto.observations())
-                    .quantity(itemDto.quantity())
-                    .totalPrice(itemDto.totalPrice())
-                    .build();
+            throw new IllegalArgumentException("Tipo de item de pedido desconhecido.");
         }).collect(Collectors.toList());
 
         Order order = Order.builder()
@@ -104,6 +73,63 @@ public class OrderService {
 
         return orderRepository.save(order);
     }
+
+    private OrderItem createPizzaOrderItem(PizzaCartItemRequestDto itemDto) {
+        PizzaType pizzaType = pizzaTypeRepository.findById(itemDto.getPizzaTypeId())
+                .orElseThrow(() -> new RuntimeException("Tipo de Pizza não encontrado: " + itemDto.getPizzaTypeId()));
+
+        List<PizzaFlavor> flavors = pizzaFlavorRepository.findAllById(itemDto.getFlavorIds());
+        if (flavors.isEmpty()) {
+            throw new RuntimeException("Pelo menos um sabor deve ser selecionado.");
+        }
+
+        PizzaCrust crust = null;
+        if (itemDto.getCrustId() != null && !itemDto.getCrustId().isEmpty()) {
+            crust = pizzaCrustRepository.findById(itemDto.getCrustId())
+                    .orElseThrow(() -> new RuntimeException("Borda não encontrada: " + itemDto.getCrustId()));
+        }
+
+        List<OrderItemExtra> appliedExtras = itemDto.getExtraSelections().stream().map(selection -> {
+            PizzaExtra extra = pizzaExtraRepository.findById(selection.extraId())
+                    .orElseThrow(() -> new RuntimeException("Adicional não encontrado: " + selection.extraId()));
+
+            PizzaFlavor appliedToFlavor = null;
+            if (selection.flavorId() != null) {
+                appliedToFlavor = pizzaFlavorRepository.findById(selection.flavorId())
+                        .orElseThrow(() -> new RuntimeException("Sabor para o adicional não encontrado: " + selection.flavorId()));
+            }
+
+            return OrderItemExtra.builder()
+                    .extra(extra)
+                    .appliedToFlavor(appliedToFlavor)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return OrderItem.builder()
+                .itemType(OrderItemType.PIZZA)
+                .pizzaType(pizzaType)
+                .flavors(flavors)
+                .appliedExtras(appliedExtras)
+                .crust(crust)
+                .observations(itemDto.getObservations())
+                .quantity(itemDto.getQuantity())
+                .totalPrice(itemDto.getTotalPrice())
+                .build();
+    }
+
+    private OrderItem createBeverageOrderItem(BeverageCartItemRequestDto itemDto) {
+        Beverage beverage = beverageRepository.findById(itemDto.getBeverageId())
+                .orElseThrow(() -> new RuntimeException("Bebida não encontrada: " + itemDto.getBeverageId()));
+
+        return OrderItem.builder()
+                .itemType(OrderItemType.BEVERAGE)
+                .beverage(beverage)
+                .quantity(itemDto.getQuantity())
+                .totalPrice(itemDto.getTotalPrice())
+                .observations(itemDto.getObservations())
+                .build();
+    }
+
 
     private void saveAddressForCustomer(CustomerUser customer, DeliveryAddress deliveryAddress) {
         boolean addressExists = customer.getAddresses().stream().anyMatch(existingAddress ->

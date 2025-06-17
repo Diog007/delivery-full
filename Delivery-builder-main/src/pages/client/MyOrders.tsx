@@ -6,7 +6,7 @@ import { api } from "@/services/apiService";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
-import { Pizza, Truck, History } from "lucide-react";
+import { Pizza, Truck, History, GlassWater } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const MyOrders = () => {
@@ -65,16 +65,28 @@ export const MyOrders = () => {
                                     <CardContent className="pt-6">
                                         <h4 className="font-semibold mb-3 text-gray-700">Itens do Pedido:</h4>
                                         <div className="space-y-4">
-                                            {order.items.map((item, index) => (
+                                            {order.items.map((item, index) => {
+                                                const isPizza = item.itemType === 'PIZZA';
+                                                const imageUrl = isPizza ? item.pizzaType?.imageUrl : item.beverage?.imageUrl;
+                                                const ItemIcon = isPizza ? Pizza : GlassWater;
+                                                const name = isPizza ? `${item.pizzaType?.name}` : item.beverage?.name;
+                                                const description = isPizza ? item.flavors?.map(f => f.name).join(' / ') : item.beverage?.description;
+
+                                                return (
                                                 <div key={index} className="flex items-center space-x-4">
-                                                    {item.pizzaType?.imageUrl ? (<img src={`http://localhost:8090${item.pizzaType.imageUrl}`} alt={item.pizzaType.name} className="w-16 h-16 rounded-md object-cover"/>) : (<div className="w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Pizza className="h-6 w-6" /></div>)}
+                                                    {imageUrl ? (
+                                                        <img src={`http://localhost:8090${imageUrl}`} alt={name} className="w-16 h-16 rounded-md object-cover"/>
+                                                    ) : (
+                                                        <div className="w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
+                                                            <ItemIcon className="h-6 w-6" />
+                                                        </div>
+                                                    )}
                                                     <div>
-                                                        {/* --- LINHAS CORRIGIDAS --- */}
-                                                        <p className="font-medium text-gray-800">{item.quantity}x {item.pizzaType?.name || 'Tipo Removido'}</p>
-                                                        <p className="text-sm text-gray-600">{item.flavors?.map(f => f.name).join(' / ') || 'Sabor Removido'}</p>
+                                                        <p className="font-medium text-gray-800">{item.quantity}x {name || 'Item Removido'}</p>
+                                                        <p className="text-sm text-gray-600">{description || 'Descrição indisponível'}</p>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
                                     </CardContent>
                                     <CardFooter className="bg-gray-50 border-t flex justify-between items-center py-4">

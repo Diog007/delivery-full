@@ -2,6 +2,10 @@ package com.pizzadelivery.backend.mappers;
 
 import com.pizzadelivery.backend.dto.ResponseDtos;
 import com.pizzadelivery.backend.entity.Order;
+import com.pizzadelivery.backend.enums.OrderItemType;
+
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class OrderMapper {
@@ -11,22 +15,27 @@ public class OrderMapper {
             return null;
         }
 
-        var itemDtos = order.getItems().stream()
+        List<ResponseDtos.OrderItemDto> itemDtos = order.getItems().stream()
                 .map(item -> {
-                    // Mapeia os adicionais aplicados
-                    var appliedExtrasDto = item.getAppliedExtras().stream()
-                            .map(appliedExtra -> new ResponseDtos.AppliedExtraDto(
-                                    appliedExtra.getExtra(),
-                                    appliedExtra.getAppliedToFlavor()
-                            ))
-                            .collect(Collectors.toList());
+                    // Mapeia os adicionais apenas se o item for uma Pizza
+                    List<ResponseDtos.AppliedExtraDto> appliedExtrasDto = Collections.emptyList();
+                    if (item.getItemType() == OrderItemType.PIZZA && item.getAppliedExtras() != null) {
+                        appliedExtrasDto = item.getAppliedExtras().stream()
+                                .map(appliedExtra -> new ResponseDtos.AppliedExtraDto(
+                                        appliedExtra.getExtra(),
+                                        appliedExtra.getAppliedToFlavor()
+                                ))
+                                .collect(Collectors.toList());
+                    }
 
                     return new ResponseDtos.OrderItemDto(
                             item.getId(),
+                            item.getItemType(),
                             item.getPizzaType(),
                             item.getFlavors(),
-                            appliedExtrasDto, // MODIFICADO
+                            appliedExtrasDto,
                             item.getCrust(),
+                            item.getBeverage(),
                             item.getObservations(),
                             item.getQuantity(),
                             item.getTotalPrice()

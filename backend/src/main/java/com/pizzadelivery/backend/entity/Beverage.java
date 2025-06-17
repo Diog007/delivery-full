@@ -1,9 +1,6 @@
 package com.pizzadelivery.backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*; // Importe o ManyToOne e JoinColumn
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,4 +19,13 @@ public class Beverage {
     private String description;
     private double price;
     private String imageUrl;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean alcoholic = false;
+
+    // A linha de categoria foi modificada para um relacionamento
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private BeverageCategory category;
 }

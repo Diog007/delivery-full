@@ -1,5 +1,6 @@
 package com.pizzadelivery.backend.entity;
 
+import com.pizzadelivery.backend.enums.OrderItemType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,11 +14,17 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 public class OrderItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Enumerated(EnumType.STRING)
+    private OrderItemType itemType;
+
+    // Campos para PIZZA
     @ManyToOne
+    @JoinColumn(name = "pizza_type_id", nullable = true)
     private PizzaType pizzaType;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -28,21 +35,20 @@ public class OrderItem {
     )
     private List<PizzaFlavor> flavors;
 
-    // --- CÓDIGO MODIFICADO ---
-    // Removemos a relação ManyToMany direta com PizzaExtra
-    // @ManyToMany(fetch = FetchType.EAGER)
-    // private List<PizzaExtra> extras;
-
-    // Adicionamos a nova relação com a entidade de ligação
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "order_item_id")
     private List<OrderItemExtra> appliedExtras;
-    // --- FIM DA MODIFICAÇÃO ---
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "crust_id", nullable = true)
     private PizzaCrust crust;
 
+    // Campo para BEBIDA
+    @ManyToOne
+    @JoinColumn(name = "beverage_id", nullable = true)
+    private Beverage beverage;
+
+    // Campos comuns
     private String observations;
     private int quantity;
     private double totalPrice;

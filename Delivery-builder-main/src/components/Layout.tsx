@@ -1,3 +1,5 @@
+// src/components/Layout.tsx
+
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShoppingCart, Pizza, Phone, MapPin, ChevronDown, GlassWater } from "lucide-react";
@@ -17,9 +19,10 @@ import { useCart } from "@/contexts/CartContext";
 
 interface LayoutProps {
   children: ReactNode;
+  onNavigateToBeverages?: () => void; // <-- ADICIONE ESTA PROP
 }
 
-export const Layout = ({ children }: LayoutProps) => {
+export const Layout = ({ children, onNavigateToBeverages }: LayoutProps) => { // <-- ADICIONE A PROP AQUI
   const { getTotalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,6 +35,17 @@ export const Layout = ({ children }: LayoutProps) => {
     logout();
     navigate("/");
   };
+
+  const handleBeveragesClick = () => {
+    // Se estivermos na HomePage e a função for passada, use-a.
+    if (location.pathname === '/' && onNavigateToBeverages) {
+      onNavigateToBeverages();
+    } else {
+      // Caso contrário, navegue para a página de bebidas.
+      navigate('/beverages');
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -55,16 +69,18 @@ export const Layout = ({ children }: LayoutProps) => {
                 <Pizza className="h-4 w-4 mr-2"/>
                 Cardápio
               </Link>
-              {/* --- BOTÃO BEBIDAS ADICIONADO --- */}
-              <Link
-                to="/beverages"
+              
+              {/* --- BOTÃO BEBIDAS MODIFICADO --- */}
+              <button
+                onClick={handleBeveragesClick}
                 className={`flex items-center text-white hover:text-red-200 transition-colors ${
                   location.pathname === "/beverages" ? "border-b-2 border-white pb-1" : ""
                 }`}
               >
                 <GlassWater className="h-4 w-4 mr-2"/>
                 Bebidas
-              </Link>
+              </button>
+
               <Link
                 to={isAuthenticated ? "/my-orders" : "/tracking"}
                 className={`text-white hover:text-red-200 transition-colors ${

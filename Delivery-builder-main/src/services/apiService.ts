@@ -1,4 +1,4 @@
-import { Admin, DashboardStats, DailySale, SalesByPizzaType, Order, OrderStatus, PizzaExtra, PizzaFlavor, PizzaType, Customer, Address, PizzaCrust, Beverage } from "@/types";
+import { Admin, DashboardStats, DailySale, SalesByPizzaType, Order, OrderStatus, PizzaExtra, PizzaFlavor, PizzaType, Customer, Address, PizzaCrust, Beverage, BeverageCategory } from "@/types";
 import { AuthDtos, OrderDtos, CustomerDtos, MenuDtos } from "@/dto";
 
 const API_BASE_URL = 'http://localhost:8090/api';
@@ -49,6 +49,7 @@ const publicApi = {
   getAllCrusts: () => baseRequest<PizzaCrust[]>('/menu/crusts'),
   getCrustsForType: (typeId: string) => baseRequest<PizzaCrust[]>(`/menu/types/${typeId}/crusts`),
   getBeverages: () => baseRequest<Beverage[]>('/menu/beverages'),
+  getBeverageCategories: () => baseRequest<BeverageCategory[]>('/menu/beverage-categories'), // ADICIONADO
 };
 
 const customerApi = {
@@ -98,14 +99,21 @@ const adminApi = {
   
   updateAddress: (id: string, data: Address) => baseRequest<Address>(`/admin/addresses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteAddress: (id: string) => baseRequest<void>(`/admin/addresses/${id}`, { method: 'DELETE' }),
-  createBeverage: (data: Partial<Beverage>) => baseRequest<Beverage>('/admin/beverages', { method: 'POST', body: JSON.stringify(data) }),
-  updateBeverage: (id: string, data: Partial<Beverage>) => baseRequest<Beverage>(`/admin/beverages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  
+  createBeverage: (data: MenuDtos.BeverageRequestDto) => baseRequest<Beverage>('/admin/beverages', { method: 'POST', body: JSON.stringify(data) }),
+  updateBeverage: (id: string, data: MenuDtos.BeverageRequestDto) => baseRequest<Beverage>(`/admin/beverages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   uploadBeverageImage: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     return baseRequest<Beverage>(`/admin/beverages/${id}/image`, { method: 'POST', body: formData });
   },
   deleteBeverage: (id: string) => baseRequest<void>(`/admin/beverages/${id}`, { method: 'DELETE' }),
+
+  // ADICIONADO: Métodos para gerenciar categorias de bebida
+  getAllBeverageCategories: () => baseRequest<BeverageCategory[]>('/admin/beverage-categories'),
+  createBeverageCategory: (data: { name: string }) => baseRequest<BeverageCategory>('/admin/beverage-categories', { method: 'POST', body: JSON.stringify(data) }),
+  updateBeverageCategory: (id: string, data: { name: string }) => baseRequest<BeverageCategory>(`/admin/beverage-categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteBeverageCategory: (id: string) => baseRequest<void>(`/admin/beverage-categories/${id}`, { method: 'DELETE' }),
 };
 
 export const api = {

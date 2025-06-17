@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:8080") // <-- ADICIONE ESTA LINHA
 public class AdminController {
 
     private final DashboardService dashboardService;
@@ -153,25 +154,36 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- BEBIDAS (NOVO) ---
+    // --- CATEGORIAS DE BEBIDA (NOVO) ---
+    @GetMapping("/beverage-categories")
+    public ResponseEntity<List<BeverageCategory>> getAllBeverageCategories() {
+        return ResponseEntity.ok(menuService.getAllBeverageCategories());
+    }
+
+    @PostMapping("/beverage-categories")
+    public ResponseEntity<BeverageCategory> createBeverageCategory(@RequestBody MenuDtos.BeverageCategoryRequestDto dto) {
+        return new ResponseEntity<>(menuService.saveBeverageCategory(dto), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/beverage-categories/{id}")
+    public ResponseEntity<BeverageCategory> updateBeverageCategory(@PathVariable String id, @RequestBody MenuDtos.BeverageCategoryRequestDto dto) {
+        return ResponseEntity.ok(menuService.updateBeverageCategory(id, dto));
+    }
+
+    @DeleteMapping("/beverage-categories/{id}")
+    public ResponseEntity<Void> deleteBeverageCategory(@PathVariable String id) {
+        menuService.deleteBeverageCategory(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- BEBIDAS (MODIFICADO) ---
     @PostMapping("/beverages")
-    public ResponseEntity<Beverage> createBeverage(@RequestBody Beverage beverage) {
-        return new ResponseEntity<>(menuService.saveBeverage(beverage), HttpStatus.CREATED);
+    public ResponseEntity<Beverage> createBeverage(@RequestBody MenuDtos.BeverageRequestDto beverageDto) {
+        return new ResponseEntity<>(menuService.saveBeverage(beverageDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/beverages/{id}")
-    public ResponseEntity<Beverage> updateBeverage(@PathVariable String id, @RequestBody Beverage beverage) {
-        return ResponseEntity.ok(menuService.updateBeverage(id, beverage));
-    }
-
-    @PostMapping("/beverages/{id}/image")
-    public ResponseEntity<Beverage> uploadBeverageImage(@PathVariable String id, @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(menuService.saveBeverageImage(id, file));
-    }
-
-    @DeleteMapping("/beverages/{id}")
-    public ResponseEntity<Void> deleteBeverage(@PathVariable String id) {
-        menuService.deleteBeverage(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Beverage> updateBeverage(@PathVariable String id, @RequestBody MenuDtos.BeverageRequestDto beverageDto) {
+        return ResponseEntity.ok(menuService.updateBeverage(id, beverageDto));
     }
 }

@@ -6,7 +6,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext';
 
-export const LoginModal = ({ open, setOpen }) => {
+// AQUI A MUDANÇA: de 'setOpen' para 'onOpenChange'
+export const LoginModal = ({ open, onOpenChange }) => {
   const { login, register } = useCustomerAuth();
   const [isLogin, setIsLogin] = useState(true);
 
@@ -15,7 +16,7 @@ export const LoginModal = ({ open, setOpen }) => {
     const email = e.target.email.value;
     const password = e.target.password.value;
     const success = await login(email, password);
-    if (success) setOpen(false);
+    if (success) onOpenChange(false);
     else alert("Email ou senha inválidos.");
   };
 
@@ -29,11 +30,12 @@ export const LoginModal = ({ open, setOpen }) => {
       cpf: e.target.cpf.value,
     };
     const success = await register(formData);
-    if (success) setOpen(false);
+    if (success) onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    // E AQUI: usando a nova prop 'onOpenChange'
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isLogin ? 'Entrar na sua conta' : 'Criar nova conta'}</DialogTitle>

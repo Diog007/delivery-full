@@ -1,21 +1,12 @@
 package com.pizzadelivery.backend.service;
 
 import com.pizzadelivery.backend.dto.MenuDtos;
-import com.pizzadelivery.backend.entity.Beverage;
-import com.pizzadelivery.backend.entity.PizzaCrust;
-import com.pizzadelivery.backend.entity.PizzaExtra;
-import com.pizzadelivery.backend.entity.PizzaFlavor;
-import com.pizzadelivery.backend.entity.PizzaType;
-import com.pizzadelivery.backend.repository.BeverageRepository;
-import com.pizzadelivery.backend.repository.PizzaCrustRepository;
-import com.pizzadelivery.backend.repository.PizzaExtraRepository;
-import com.pizzadelivery.backend.repository.PizzaFlavorRepository;
-import com.pizzadelivery.backend.repository.PizzaTypeRepository;
+import com.pizzadelivery.backend.entity.*;
+import com.pizzadelivery.backend.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +21,7 @@ public class MenuService {
     private final PizzaExtraRepository pizzaExtraRepo;
     private final PizzaCrustRepository pizzaCrustRepo;
     private final BeverageRepository beverageRepo;
+    private final BeverageCategoryRepository beverageCategoryRepo; // <-- ADICIONADO
     private final FileStorageService fileStorageService;
 
 
@@ -257,18 +249,56 @@ public class MenuService {
         pizzaCrustRepo.deleteById(id);
     }
 
-    // --- MÉTODOS PARA BEBIDAS ---
+    // --- MÉTODOS PARA CATEGORIAS DE BEBIDA (NOVO) ---
+    public List<BeverageCategory> getAllBeverageCategories() {
+        return beverageCategoryRepo.findAll();
+    }
+
+    public BeverageCategory saveBeverageCategory(MenuDtos.BeverageCategoryRequestDto dto) {
+        BeverageCategory category = BeverageCategory.builder().name(dto.name()).build();
+        return beverageCategoryRepo.save(category);
+    }
+
+    public BeverageCategory updateBeverageCategory(String id, MenuDtos.BeverageCategoryRequestDto dto) {
+        BeverageCategory category = beverageCategoryRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Categoria de bebida não encontrada"));
+        category.setName(dto.name());
+        return beverageCategoryRepo.save(category);
+    }
+
+    public void deleteBeverageCategory(String id) {
+        beverageCategoryRepo.deleteById(id);
+    }
+
+    // --- MÉTODOS PARA BEBIDAS (MODIFICADO) ---
     @Transactional
-    public Beverage saveBeverage(Beverage beverage) {
-        return beverageRepo.save(beverage);
+    public Beverage saveBeverage(MenuDtos.BeverageRequestDto beverageDto) {
+        BeverageCategory category = beverageCategoryRepo.findById(beverageDto.categoryId())
+                .orElseThrow(() -> new RuntimeException("Categoria de bebida não encontrada"));
+
+        Beverage newBeverage = Beverage.builder()
+                .name(beverageDto.name())
+                .description(beverageDto.description())
+                .price(beverageDto.price())
+                .alcoholic(beverageDto.alcoholic())
+                .category(category)
+                .build();
+        return beverageRepo.save(newBeverage);
     }
 
     @Transactional
-    public Beverage updateBeverage(String id, Beverage beverageDetails) {
-        Beverage beverage = beverageRepo.findById(id).orElseThrow(() -> new RuntimeException("Bebida não encontrada"));
-        beverage.setName(beverageDetails.getName());
-        beverage.setDescription(beverageDetails.getDescription());
-        beverage.setPrice(beverageDetails.getPrice());
+    public Beverage updateBeverage(String id, MenuDtos.BeverageRequestDto beverageDetails) {
+        Beverage beverage = beverageRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bebida não encontrada"));
+
+        BeverageCategory category = beverageCategoryRepo.findById(beverageDetails.categoryId())
+                .orElseThrow(() -> new RuntimeException("Categoria de bebida não encontrada"));
+
+        beverage.setName(beverageDetails.name());
+        beverage.setDescription(beverageDetails.description());
+        beverage.setPrice(beverageDetails.price());
+        beverage.setAlcoholic(beverageDetails.alcoholic());
+        beverage.setCategory(category);
         return beverageRepo.save(beverage);
     }
 

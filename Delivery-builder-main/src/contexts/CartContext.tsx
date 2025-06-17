@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { CartItem, PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust, AppliedExtra, Beverage } from "@/types";
+import { CartItem, PizzaType, PizzaFlavor, PizzaCrust, AppliedExtra, Beverage } from "@/types";
 
+// 1. Adicionada a assinatura da função que estava faltando
 interface CartContextType {
   items: CartItem[];
   addItem: (
@@ -44,11 +45,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     observations: string,
     quantity: number,
   ) => {
-    // --- LÓGICA DE CÁLCULO DE PREÇO ATUALIZADA ---
     const isHalfAndHalf = flavors.length > 1;
     
     const flavorPrice = flavors.reduce((sum, flavor) => {
-      // Se for meio a meio, divide o preço do sabor por 2. Senão, usa o preço cheio.
       return sum + (isHalfAndHalf ? flavor.price / 2 : flavor.price);
     }, 0);
 
@@ -56,7 +55,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     const crustPrice = crust ? crust.price : 0;
     
     const totalPrice = (pizzaType.basePrice + flavorPrice + extrasPrice + crustPrice) * quantity;
-    // --- FIM DA LÓGICA DE CÁLCULO ---
 
     const newItem: CartItem = {
       id: `pizza-${Date.now()}`,
@@ -74,6 +72,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     setItems((prev) => [...prev, newItem]);
   };
 
+  // 2. Implementação da lógica da função
   const addBeverageToCart = (beverage: Beverage, quantity: number) => {
     const newItem: CartItem = {
         id: `beverage-${beverage.id}-${Date.now()}`,
@@ -125,7 +124,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       value={{
         items,
         addItem,
-        addBeverageToCart,
+        addBeverageToCart, // 3. Disponibilização da função para os componentes filhos
         removeItem,
         updateItemQuantity,
         clearCart,

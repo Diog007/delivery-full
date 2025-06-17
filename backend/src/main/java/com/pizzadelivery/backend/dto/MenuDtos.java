@@ -23,4 +23,18 @@ public class MenuDtos {
             double price,
             List<String> pizzaTypeIds
     ) {}
+
+    // DTO MODIFICADO para receber o ID da categoria
+    public record BeverageRequestDto(
+            String name,
+            String description,
+            double price,
+            boolean alcoholic,
+            String categoryId // <-- Adicionado
+    ) {}
+
+    // NOVO DTO para criar/atualizar categorias de bebida
+    public record BeverageCategoryRequestDto(
+            String name
+    ) {}
 }

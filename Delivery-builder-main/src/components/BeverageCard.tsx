@@ -2,46 +2,52 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Beverage } from "@/types";
 import { formatPrice } from "@/lib/utils";
-import { Minus, Plus, GlassWater } from "lucide-react";
-import { useState } from "react";
+import { Plus } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { toast } from "@/components/ui/use-toast";
 
 interface BeverageCardProps {
   beverage: Beverage;
 }
 
 export const BeverageCard = ({ beverage }: BeverageCardProps) => {
-  const [quantity, setQuantity] = useState(1);
-  const { addBeverageToCart } = useCart();
+  const { addBeverageItem } = useCart();
 
   const handleAddToCart = () => {
-    addBeverageToCart(beverage, quantity);
-    // Opcional: mostrar um toast de confirmação
+    addBeverageItem(beverage, 1);
+    toast({
+      title: "Bebida adicionada!",
+      description: `${beverage.name} foi adicionado(a) ao seu carrinho.`,
+    });
   };
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <div className="w-full h-40 bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
-          {beverage.imageUrl ? (
-            <img src={`http://localhost:8090${beverage.imageUrl}`} alt={beverage.name} className="w-full h-full object-cover" />
-          ) : (
-            <GlassWater className="h-16 w-16 text-gray-300" />
-          )}
-        </div>
-        <CardTitle>{beverage.name}</CardTitle>
+    <Card className="flex flex-col text-center items-center p-4 transition-all hover:shadow-lg hover:-translate-y-1">
+      <CardHeader className="p-0 mb-3">
+        {beverage.imageUrl ? (
+          <img
+            src={`http://localhost:8090${beverage.imageUrl}`}
+            alt={beverage.name}
+            className="w-24 h-24 object-contain"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+             <span className="text-4xl">🥤</span>
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-sm text-gray-600 mb-4">{beverage.description}</p>
-        <p className="font-semibold text-lg">{formatPrice(beverage.price)}</p>
+      <CardContent className="flex-1 p-0 text-center">
+        <CardTitle className="text-base font-semibold">{beverage.name}</CardTitle>
+        {beverage.description && (
+          <p className="text-sm text-gray-500 mt-1">{beverage.description}</p>
+        )}
+        <p className="text-lg font-bold text-red-600 mt-2">{formatPrice(beverage.price)}</p>
       </CardContent>
-      <CardFooter className="flex-col items-stretch space-y-2">
-         <div className="flex items-center justify-center space-x-3">
-            <Button variant="outline" size="sm" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus className="h-4 w-4" /></Button>
-            <span className="font-bold w-8 text-center">{quantity}</span>
-            <Button variant="outline" size="sm" onClick={() => setQuantity(quantity + 1)}><Plus className="h-4 w-4" /></Button>
-         </div>
-        <Button onClick={handleAddToCart} className="w-full bg-red-600 hover:bg-red-700">Adicionar</Button>
+      <CardFooter className="p-0 mt-3 w-full">
+        <Button onClick={handleAddToCart} size="sm" className="w-full bg-red-600 hover:bg-red-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar
+        </Button>
       </CardFooter>
     </Card>
   );

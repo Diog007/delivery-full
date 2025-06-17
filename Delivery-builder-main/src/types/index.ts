@@ -7,6 +7,7 @@ export type OrderStatus =
 
 export type DeliveryType = "DELIVERY" | "PICKUP";
 export type PaymentMethod = "CASH" | "CARD";
+export type DrinkCategory = 'refrigerante' | 'cerveja' | 'suco' | 'agua';
 
 export interface PizzaCrust {
   id: string;
@@ -41,23 +42,42 @@ export interface PizzaExtra {
   price: number;
 }
 
+export interface BeverageCategory { // <-- ADICIONE ESTA NOVA INTERFACE
+  id: string;
+  name: string;
+}
+
 export interface Beverage {
   id: string;
   name: string;
   description: string;
   price: number;
   imageUrl?: string;
+  alcoholic: boolean; 
+  category: BeverageCategory; // <-- MODIFIQUE ESTA LINHA
 }
 
-// Nova interface para representar um adicional e sua posição
 export interface AppliedExtra {
   extra: PizzaExtra;
-  onFlavor: PizzaFlavor | null; // null significa pizza toda
+  onFlavor: PizzaFlavor | null;
 }
+
+export type OrderableItem =
+  | {
+      itemType: "PIZZA";
+      pizzaType: PizzaType;
+      flavors: PizzaFlavor[];
+      crust: PizzaCrust | null;
+      appliedExtras: AppliedExtra[];
+    }
+  | {
+      itemType: "BEVERAGE";
+      beverage: Beverage;
+    };
 
 export interface CartItem {
   id: string;
-  type: 'pizza' | 'beverage'; // Para diferenciar os itens no carrinho
+  type: 'pizza' | 'beverage'; // <-- Propriedade que estava faltando
   name: string; // Um nome geral para exibição no carrinho
   pizzaType?: PizzaType;
   flavors?: PizzaFlavor[];
@@ -90,13 +110,14 @@ export interface Payment {
   cardType?: string;
 }
 
-// Interface para um item de pedido como vem da API
-interface OrderItemFromApi {
+export interface OrderItemFromApi {
     id: string;
-    pizzaType: PizzaType;
-    flavors: PizzaFlavor[];
-    appliedExtras: AppliedExtra[]; // MODIFICADO
+    itemType: "PIZZA" | "BEVERAGE";
+    pizzaType: PizzaType | null;
+    flavors: PizzaFlavor[] | null;
+    appliedExtras: AppliedExtra[] | null; 
     crust: PizzaCrust | null;
+    beverage: Beverage | null;
     observations: string;
     quantity: number;
     totalPrice: number;
@@ -104,7 +125,7 @@ interface OrderItemFromApi {
 
 export interface Order {
   id: string;
-  items: OrderItemFromApi[]; // MODIFICADO
+  items: OrderItemFromApi[]; 
   customerUser: CustomerUserDto;
   deliveryType: DeliveryType;
   deliveryAddress?: DeliveryAddress;

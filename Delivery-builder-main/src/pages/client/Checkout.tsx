@@ -73,23 +73,31 @@ export const Checkout = () => {
 
         setIsLoading(true);
         try {
-            // --- CÓDIGO CORRIGIDO ---
-            const itemsForApi: OrderDtos.CartItemRequestDto[] = items.map(item => {
-                // Mapeia a nova estrutura de `appliedExtras` para o DTO que a API espera
-                const extraSelections: OrderDtos.ExtraSelectionDto[] = item.appliedExtras.map(applied => ({
-                    extraId: applied.extra.id,
-                    flavorId: applied.onFlavor?.id || null,
-                }));
-
-                return {
-                    pizzaTypeId: item.pizzaType.id,
-                    flavorIds: item.flavors.map(flavor => flavor.id),
-                    extraSelections: extraSelections, // Usa a nova estrutura mapeada
-                    crustId: item.crust?.id || null,
-                    observations: item.observations,
-                    quantity: item.quantity,
-                    totalPrice: item.totalPrice,
-                };
+            const itemsForApi: OrderDtos.CartItemRequestDto[] = items.map(cartItem => {
+                if (cartItem.item.itemType === 'PIZZA') {
+                    const extraSelections: OrderDtos.ExtraSelectionDto[] = cartItem.item.appliedExtras.map(applied => ({
+                        extraId: applied.extra.id,
+                        flavorId: applied.onFlavor?.id || null,
+                    }));
+                    return {
+                        itemType: 'PIZZA',
+                        pizzaTypeId: cartItem.item.pizzaType.id,
+                        flavorIds: cartItem.item.flavors.map(flavor => flavor.id),
+                        extraSelections: extraSelections,
+                        crustId: cartItem.item.crust?.id || null,
+                        observations: cartItem.observations,
+                        quantity: cartItem.quantity,
+                        totalPrice: cartItem.totalPrice,
+                    };
+                } else { // BEVERAGE
+                    return {
+                        itemType: 'BEVERAGE',
+                        beverageId: cartItem.item.beverage.id,
+                        observations: cartItem.observations,
+                        quantity: cartItem.quantity,
+                        totalPrice: cartItem.totalPrice
+                    }
+                }
             });
             
             const orderData: CreateOrderDto = {
@@ -101,7 +109,6 @@ export const Checkout = () => {
                 totalAmount: finalTotal,
                 observations,
             };
-            // --- FIM DA CORREÇÃO ---
 
             const createdOrder = await api.customer.createOrder(orderData);
             if (createdOrder) {
