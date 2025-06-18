@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  MenuIcon,
+  Menu as MenuIcon, // Renomeado para evitar conflito com o nome da tag
   ShoppingBag,
   LogOut,
   Pizza,
@@ -19,6 +19,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { admin, logout } = useAdmin();
   const location = useLocation();
 
+  // CORREÇÃO: Garantindo que todos os itens de menu estão presentes no array
   const menuItems = [
     { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/admin/orders", label: "Pedidos", icon: ShoppingBag },

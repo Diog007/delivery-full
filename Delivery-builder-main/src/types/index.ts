@@ -42,7 +42,7 @@ export interface PizzaExtra {
   price: number;
 }
 
-export interface BeverageCategory { // <-- ADICIONE ESTA NOVA INTERFACE
+export interface BeverageCategory {
   id: string;
   name: string;
 }
@@ -54,7 +54,7 @@ export interface Beverage {
   price: number;
   imageUrl?: string;
   alcoholic: boolean; 
-  category: BeverageCategory; // <-- MODIFIQUE ESTA LINHA
+  category: BeverageCategory;
 }
 
 export interface AppliedExtra {
@@ -62,6 +62,7 @@ export interface AppliedExtra {
   onFlavor: PizzaFlavor | null;
 }
 
+// CORREÇÃO: A estrutura aninhada agora é definida aqui
 export type OrderableItem =
   | {
       itemType: "PIZZA";
@@ -69,21 +70,22 @@ export type OrderableItem =
       flavors: PizzaFlavor[];
       crust: PizzaCrust | null;
       appliedExtras: AppliedExtra[];
+      beverage?: never;
     }
   | {
       itemType: "BEVERAGE";
       beverage: Beverage;
+      pizzaType?: never;
+      flavors?: never;
+      crust?: never;
+      appliedExtras?: never;
     };
 
+// CORREÇÃO: A interface CartItem foi atualizada para usar OrderableItem
 export interface CartItem {
   id: string;
-  type: 'pizza' | 'beverage'; // <-- Propriedade que estava faltando
-  name: string; // Um nome geral para exibição no carrinho
-  pizzaType?: PizzaType;
-  flavors?: PizzaFlavor[];
-  crust?: PizzaCrust | null;
-  appliedExtras?: AppliedExtra[]; 
-  beverage?: Beverage; // Adiciona a opção de ter uma bebida
+  name: string;
+  item: OrderableItem;
   observations: string;
   quantity: number;
   totalPrice: number;

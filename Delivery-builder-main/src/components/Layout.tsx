@@ -1,11 +1,10 @@
-// src/components/Layout.tsx
-
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShoppingCart, Pizza, Phone, MapPin, ChevronDown, GlassWater } from "lucide-react";
 
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { LoginModal } from "./LoginModal";
+import { BeverageModal } from "./BeverageModal"; // Importe o novo modal
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -19,10 +18,9 @@ import { useCart } from "@/contexts/CartContext";
 
 interface LayoutProps {
   children: ReactNode;
-  onNavigateToBeverages?: () => void; // <-- ADICIONE ESTA PROP
 }
 
-export const Layout = ({ children, onNavigateToBeverages }: LayoutProps) => { // <-- ADICIONE A PROP AQUI
+export const Layout = ({ children }: LayoutProps) => {
   const { getTotalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,26 +28,17 @@ export const Layout = ({ children, onNavigateToBeverages }: LayoutProps) => { //
 
   const { isAuthenticated, customerName, logout } = useCustomerAuth();
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [isBeverageModalOpen, setBeverageModalOpen] = useState(false); // Estado para o modal de bebidas
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  const handleBeveragesClick = () => {
-    // Se estivermos na HomePage e a função for passada, use-a.
-    if (location.pathname === '/' && onNavigateToBeverages) {
-      onNavigateToBeverages();
-    } else {
-      // Caso contrário, navegue para a página de bebidas.
-      navigate('/beverages');
-    }
-  };
-
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <LoginModal open={isLoginModalOpen} setOpen={setLoginModalOpen} />
+      <LoginModal open={isLoginModalOpen} onOpenChange={setLoginModalOpen} />
+      <BeverageModal open={isBeverageModalOpen} onOpenChange={setBeverageModalOpen} /> 
 
       <header className="bg-red-600 shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -70,12 +59,9 @@ export const Layout = ({ children, onNavigateToBeverages }: LayoutProps) => { //
                 Cardápio
               </Link>
               
-              {/* --- BOTÃO BEBIDAS MODIFICADO --- */}
               <button
-                onClick={handleBeveragesClick}
-                className={`flex items-center text-white hover:text-red-200 transition-colors ${
-                  location.pathname === "/beverages" ? "border-b-2 border-white pb-1" : ""
-                }`}
+                onClick={() => setBeverageModalOpen(true)} // Ação para abrir o modal
+                className={`flex items-center text-white hover:text-red-200 transition-colors`}
               >
                 <GlassWater className="h-4 w-4 mr-2"/>
                 Bebidas

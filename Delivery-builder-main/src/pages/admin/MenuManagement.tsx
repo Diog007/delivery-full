@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Pizza, Package, Star, Slice, GlassWater, AlertTriangle, ListCollapse } from "lucide-react";
 import { PizzaType, PizzaFlavor, PizzaExtra, PizzaCrust, Beverage, BeverageCategory } from "@/types";
 import { api } from "@/services/apiService";
@@ -24,7 +24,8 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-// DIÁLOGOS DE PIZZA (sem alterações, mantidos para o componente funcionar)
+// --- DIÁLOGOS DE EDIÇÃO E CRIAÇÃO (Sem alterações no código dos diálogos) ---
+
 const TypeDialog = ({ open, setOpen, editingItem, onSave, pizzaExtras, pizzaCrusts }) => {
     const { toast } = useToast();
     const [formData, setFormData] = useState({ name: "", description: "", basePrice: 0 });
@@ -366,10 +367,7 @@ const BeverageCategoryDialog = ({ open, setOpen, editingItem, onSave }) => {
                 <DialogHeader><DialogTitle>{editingItem ? 'Editar Categoria' : 'Nova Categoria de Bebida'}</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div><Label htmlFor="categoryName">Nome da Categoria</Label><Input id="categoryName" value={name} onChange={(e) => setName(e.target.value)} required /></div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancelar</Button>
-                        <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar'}</Button>
-                    </DialogFooter>
+                    <div className="flex justify-end space-x-2"><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancelar</Button><Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar'}</Button></div>
                 </form>
             </DialogContent>
         </Dialog>
@@ -473,26 +471,60 @@ export const MenuManagement = () => {
     const [isBeverageCatDialogOpen, setIsBeverageCatDialogOpen] = useState(false);
     const { toast } = useToast();
 
+    // ****** INÍCIO DA CORREÇÃO ******
     const loadData = useCallback(async () => {
+        const showErrorToast = (itemType: string, error: any) => {
+            toast({
+                title: `Erro ao carregar ${itemType}`,
+                description: error.message || "Não foi possível buscar os dados do servidor.",
+                variant: "destructive",
+            });
+        };
+
+        // Carrega cada item individualmente para evitar que um erro impeça os outros de carregar
         try {
-            const [types, flavors, extras, crusts, drinks, bevCats] = await Promise.all([
-                api.public.getPizzaTypes(),
-                api.public.getPizzaFlavors(),
-                api.public.getPizzaExtras(),
-                api.public.getAllCrusts(),
-                api.public.getBeverages(),
-                api.admin.getAllBeverageCategories(),
-            ]);
+            const types = await api.public.getPizzaTypes();
             setPizzaTypes(Array.isArray(types) ? types : []);
+        } catch (error) {
+            showErrorToast("Tipos de Pizza", error);
+        }
+    
+        try {
+            const flavors = await api.public.getPizzaFlavors();
             setPizzaFlavors(Array.isArray(flavors) ? flavors : []);
+        } catch (error) {
+            showErrorToast("Sabores", error);
+        }
+    
+        try {
+            const extras = await api.public.getPizzaExtras();
             setPizzaExtras(Array.isArray(extras) ? extras : []);
+        } catch (error) {
+            showErrorToast("Adicionais", error);
+        }
+    
+        try {
+            const crusts = await api.public.getAllCrusts();
             setPizzaCrusts(Array.isArray(crusts) ? crusts : []);
+        } catch (error) {
+            showErrorToast("Bordas", error);
+        }
+    
+        try {
+            const drinks = await api.public.getBeverages();
             setBeverages(Array.isArray(drinks) ? drinks : []);
+        } catch (error) {
+            showErrorToast("Bebidas", error);
+        }
+    
+        try {
+            const bevCats = await api.admin.getAllBeverageCategories();
             setBeverageCategories(Array.isArray(bevCats) ? bevCats : []);
-        } catch (error) { 
-            toast({ title: "Erro ao carregar cardápio", description: error.message, variant: "destructive"});
+        } catch (error) {
+            showErrorToast("Categorias de Bebidas", error);
         }
     }, [toast]);
+    // ****** FIM DA CORREÇÃO ******
 
     useEffect(() => { loadData(); }, [loadData]);
     
@@ -581,8 +613,77 @@ export const MenuManagement = () => {
                         <TabsTrigger value="beverage-categories"><ListCollapse className="h-4 w-4 mr-2" />Categorias (Bebidas)</TabsTrigger>
                     </TabsList>
                     
-                    {/* Tabs de Pizza */}
-                    {/* ... cole o conteúdo das abas de pizza aqui, se necessário ... */}
+                    <TabsContent value="types">
+                        <Card>
+                            <CardHeader className="flex-row justify-between items-center"><CardTitle>Tipos de Pizza</CardTitle><Button onClick={actions.type.new} className="bg-red-600 hover:bg-red-700"><Plus className="h-4 w-4 mr-2" />Novo Tipo</Button></CardHeader>
+                            <CardContent className="grid gap-4">
+                                {pizzaTypes.map((item) => (<div key={item.id} className="flex items-center p-4 border rounded-lg">
+                                    {item.imageUrl ? (<img src={`http://localhost:8090${item.imageUrl}`} alt={item.name} className="w-20 h-20 rounded-md object-cover mr-4" />) : (<div className="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 mr-4 flex-shrink-0"><Pizza className="h-8 w-8" /></div>)}
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold">{item.name}</h3>
+                                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                    </div>
+                                    <div className="font-semibold mr-4">{formatPrice(item.basePrice)}</div>
+                                    <div className="flex space-x-2"><Button variant="outline" size="icon" onClick={() => actions.type.edit(item)}><Edit className="h-4 w-4" /></Button><DeleteButton itemType="Tipo" itemName={item.name} onDelete={() => actions.type.delete(item.id, item.name)} /></div>
+                                </div>))}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="flavors">
+                        <Card>
+                            <CardHeader className="flex-row justify-between items-center"><CardTitle>Sabores</CardTitle><Button onClick={actions.flavor.new} className="bg-red-600 hover:bg-red-700"><Plus className="h-4 w-4 mr-2" />Novo Sabor</Button></CardHeader>
+                            <CardContent className="grid gap-4">
+                                {pizzaFlavors.map((item) => (<div key={item.id} className="flex items-center p-4 border rounded-lg">
+                                    {item.imageUrl ? (<img src={`http://localhost:8090${item.imageUrl}`} alt={item.name} className="w-20 h-20 rounded-md object-cover mr-4" />) : (<div className="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 mr-4 flex-shrink-0"><Star className="h-8 w-8" /></div>)}
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold">{item.name}</h3>
+                                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                        <div className="mt-2">{item.pizzaTypes?.map(t => <Badge key={t.id} variant="secondary" className="mr-1">{t.name}</Badge>)}</div>
+                                    </div>
+                                    <div className="font-semibold mr-4">{formatPrice(item.price)}</div>
+                                    <div className="flex space-x-2"><Button variant="outline" size="icon" onClick={() => actions.flavor.edit(item)}><Edit className="h-4 w-4" /></Button><DeleteButton itemType="Sabor" itemName={item.name} onDelete={() => actions.flavor.delete(item.id, item.name)} /></div>
+                                </div>))}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="crusts">
+                        <Card>
+                            <CardHeader className="flex-row justify-between items-center"><CardTitle>Bordas</CardTitle><Button onClick={actions.crust.new} className="bg-red-600 hover:bg-red-700"><Plus className="h-4 w-4 mr-2" />Nova Borda</Button></CardHeader>
+                            <CardContent className="grid gap-4">
+                                {pizzaCrusts.map((item) => (<div key={item.id} className="flex items-center p-4 border rounded-lg">
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold">{item.name}</h3>
+                                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                    </div>
+                                    <div className="font-semibold mr-4">{formatPrice(item.price)}</div>
+                                    <div className="flex space-x-2"><Button variant="outline" size="icon" onClick={() => actions.crust.edit(item)}><Edit className="h-4 w-4" /></Button><DeleteButton itemType="Borda" itemName={item.name} onDelete={() => actions.crust.delete(item.id, item.name)} /></div>
+                                </div>))}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="extras">
+                        <Card>
+                            <CardHeader className="flex-row justify-between items-center"><CardTitle>Adicionais</CardTitle><Button onClick={() => actions.extra.new()} className="bg-red-600 hover:bg-red-700"><Plus className="h-4 w-4 mr-2" />Novo Adicional</Button></CardHeader>
+                            <CardContent className="grid gap-4">
+                                {pizzaExtras.map((item) => {
+                                    const associatedTypes = pizzaTypes.filter(type => type.availableExtras?.some(extra => extra.id === item.id));
+                                    return (
+                                    <div key={item.id} className="flex items-center p-4 border rounded-lg">
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold">{item.name}</h3>
+                                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                            {associatedTypes.length > 0 && (<div className="mt-2"><span className="text-xs font-semibold text-gray-500">Disponível em: </span>{associatedTypes.map(t => <Badge key={t.id} variant="outline" className="mr-1">{t.name}</Badge>)}</div>)}
+                                        </div>
+                                        <div className="font-semibold mr-4">{formatPrice(item.price)}</div>
+                                        <div className="flex space-x-2"><Button variant="outline" size="icon" onClick={() => actions.extra.edit(item)}><Edit className="h-4 w-4" /></Button><DeleteButton itemType="Adicional" itemName={item.name} onDelete={() => actions.extra.delete(item.id, item.name)} /></div>
+                                    </div>);
+                                })}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
                     <TabsContent value="beverages">
                       <Card>
@@ -631,8 +732,10 @@ export const MenuManagement = () => {
                     </TabsContent>
                 </Tabs>
   
-                {/* Diálogos */}
-                {/* ... cole os outros diálogos de pizza aqui ... */}
+                <TypeDialog open={isTypeDialogOpen} setOpen={setIsTypeDialogOpen} editingItem={editingType} onSave={handleSave} pizzaExtras={pizzaExtras} pizzaCrusts={pizzaCrusts} />
+                <FlavorDialog open={isFlavorDialogOpen} setOpen={setIsFlavorDialogOpen} editingItem={editingFlavor} onSave={handleSave} pizzaTypes={pizzaTypes} />
+                <ExtraDialog open={isExtraDialogOpen} setOpen={setIsExtraDialogOpen} editingItem={editingExtra} onSave={handleSave} pizzaTypes={pizzaTypes} />
+                <CrustDialog open={isCrustDialogOpen} setOpen={setIsCrustDialogOpen} editingItem={editingCrust} onSave={handleSave} pizzaTypes={pizzaTypes} />
                 <BeverageDialog open={isBeverageDialogOpen} setOpen={setIsBeverageDialogOpen} editingItem={editingBeverage} onSave={handleSave} categories={beverageCategories} />
                 <BeverageCategoryDialog open={isBeverageCatDialogOpen} setOpen={setIsBeverageCatDialogOpen} editingItem={editingBeverageCat} onSave={handleSave} />
             </div>

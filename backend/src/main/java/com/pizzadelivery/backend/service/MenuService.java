@@ -21,7 +21,7 @@ public class MenuService {
     private final PizzaExtraRepository pizzaExtraRepo;
     private final PizzaCrustRepository pizzaCrustRepo;
     private final BeverageRepository beverageRepo;
-    private final BeverageCategoryRepository beverageCategoryRepo; // <-- ADICIONADO
+    private final BeverageCategoryRepository beverageCategoryRepo;
     private final FileStorageService fileStorageService;
 
 
@@ -163,6 +163,8 @@ public class MenuService {
                 }
                 type.getAvailableExtras().add(savedExtra);
             });
+            // CORREÇÃO ADICIONADA: Salvar os tipos de pizza modificados
+            pizzaTypeRepo.saveAll(typesToAssociate);
         }
         return savedExtra;
     }
@@ -175,8 +177,10 @@ public class MenuService {
         extra.setDescription(dto.description());
         extra.setPrice(dto.price());
 
+        // CORREÇÃO ADICIONADA: Salvar as associações
         List<PizzaType> oldAssociations = pizzaTypeRepo.findByAvailableExtrasId(id);
         oldAssociations.forEach(type -> type.getAvailableExtras().removeIf(e -> e.getId().equals(id)));
+        pizzaTypeRepo.saveAll(oldAssociations);
 
         if (dto.pizzaTypeIds() != null && !dto.pizzaTypeIds().isEmpty()) {
             List<PizzaType> newAssociations = pizzaTypeRepo.findAllById(dto.pizzaTypeIds());
@@ -185,6 +189,7 @@ public class MenuService {
                     type.getAvailableExtras().add(extra);
                 }
             });
+            pizzaTypeRepo.saveAll(newAssociations);
         }
         return pizzaExtraRepo.save(extra);
     }
@@ -215,6 +220,8 @@ public class MenuService {
                 }
                 type.getAvailableCrusts().add(savedCrust);
             });
+            // CORREÇÃO ADICIONADA: Salvar os tipos de pizza modificados
+            pizzaTypeRepo.saveAll(typesToAssociate);
         }
         return savedCrust;
     }
@@ -227,8 +234,10 @@ public class MenuService {
         crust.setDescription(dto.description());
         crust.setPrice(dto.price());
 
+        // CORREÇÃO ADICIONADA: Salvar as associações
         List<PizzaType> oldAssociations = pizzaTypeRepo.findByAvailableCrustsId(id);
         oldAssociations.forEach(type -> type.getAvailableCrusts().removeIf(c -> c.getId().equals(id)));
+        pizzaTypeRepo.saveAll(oldAssociations);
 
         if (dto.pizzaTypeIds() != null && !dto.pizzaTypeIds().isEmpty()) {
             List<PizzaType> newAssociations = pizzaTypeRepo.findAllById(dto.pizzaTypeIds());
@@ -237,6 +246,7 @@ public class MenuService {
                     type.getAvailableCrusts().add(crust);
                 }
             });
+            pizzaTypeRepo.saveAll(newAssociations);
         }
         return pizzaCrustRepo.save(crust);
     }

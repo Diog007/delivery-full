@@ -17,6 +17,12 @@ export const CartItem = ({
   onRemove,
 }: CartItemProps) => {
 
+  // Adicionando verificação de segurança
+  if (!item.item) {
+    console.error("CartItem recebeu um item inválido:", item);
+    return null; // Não renderiza nada se o item for inválido
+  }
+
   if (item.item.itemType === 'BEVERAGE') {
     const { beverage } = item.item;
     return (

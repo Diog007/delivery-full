@@ -4,21 +4,19 @@ import { Beverage } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 interface BeverageCardProps {
   beverage: Beverage;
 }
 
 export const BeverageCard = ({ beverage }: BeverageCardProps) => {
-  const { addBeverageItem } = useCart();
+  const { addBeverageToCart } = useCart(); // Correção aqui
+  const { toast } = useToast();
 
   const handleAddToCart = () => {
-    addBeverageItem(beverage, 1);
-    toast({
-      title: "Bebida adicionada!",
-      description: `${beverage.name} foi adicionado(a) ao seu carrinho.`,
-    });
+    addBeverageToCart(beverage, 1); // Correção aqui
+    // A notificação de toast foi movida para dentro do context para mais consistência
   };
 
   return (

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { 
-  CheckCircle, Clock, Truck, Package, XCircle, Home, Wallet, Pizza, Star, Slice, PlusCircle, MessageSquare 
+  CheckCircle, Clock, Truck, Package, XCircle, Home, Wallet, Pizza, Star, Slice, GlassWater, MessageSquare 
 } from "lucide-react";
 import { Order, OrderStatus } from "@/types";
 import { OrderStatusBadge } from "./OrderStatusBadge";
@@ -154,26 +154,49 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
         </CardContent>
       </Card>
 
-      {/* --- CARD DE RESUMO DA COMPRA ATUALIZADO --- */}
       <Card>
         <CardHeader><CardTitle>Resumo da Compra</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-4">
             {order.items.map((item) => {
-                 const unitPrice = item.totalPrice / item.quantity;
-                 const isHalfAndHalf = item.flavors && item.flavors.length > 1;
+              // *** INÍCIO DA MODIFICAÇÃO ***
+              if (item.itemType === 'BEVERAGE' && item.beverage) {
+                const unitPrice = item.totalPrice / item.quantity;
+                return (
+                  <div key={item.id} className="py-4 border-b last:border-b-0">
+                    <div className="flex items-center space-x-4">
+                      {item.beverage.imageUrl ? (
+                          <img src={`http://localhost:8090${item.beverage.imageUrl}`} alt={item.beverage.name} className="w-24 h-24 rounded-lg object-contain p-2"/>
+                      ) : (
+                          <div className="w-24 h-24 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><GlassWater className="h-10 w-10" /></div>
+                      )}
+                      <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                              <h4 className="font-semibold text-lg text-gray-800">{item.quantity}x {item.beverage.name}</h4>
+                              <span className="font-bold text-lg text-gray-900">{formatPrice(item.totalPrice)}</span>
+                          </div>
+                          <p className="text-sm text-gray-600">{item.beverage.description}</p>
+                          <p className="text-sm text-gray-500 mt-2">Valor Unitário: {formatPrice(unitPrice)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
 
+              if (item.itemType === 'PIZZA' && item.pizzaType) {
+                const unitPrice = item.totalPrice / item.quantity;
+                const isHalfAndHalf = item.flavors && item.flavors.length > 1;
                 return (
                     <div key={item.id} className="py-4 border-b last:border-b-0">
                         <div className="flex items-start space-x-4">
-                            {item.pizzaType?.imageUrl ? (
+                            {item.pizzaType.imageUrl ? (
                                 <img src={`http://localhost:8090${item.pizzaType.imageUrl}`} alt={item.pizzaType.name} className="w-24 h-24 rounded-lg object-cover"/>
                             ) : (
                                 <div className="w-24 h-24 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Pizza className="h-10 w-10" /></div>
                             )}
                             <div className="flex-1">
                                 <div className="flex justify-between items-start">
-                                    <h4 className="font-semibold text-lg text-gray-800">{item.quantity}x {item.pizzaType?.name || 'Item'}</h4>
+                                    <h4 className="font-semibold text-lg text-gray-800">{item.quantity}x {item.pizzaType.name}</h4>
                                     <span className="font-bold text-lg text-gray-900">{formatPrice(item.totalPrice)}</span>
                                 </div>
                                 <p className="text-sm font-medium text-red-600 mb-3">{item.flavors?.map(f => f.name).join(' / ') || 'Sabor não encontrado'}</p>
@@ -181,7 +204,7 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
                                 <div className="text-sm text-gray-600 space-y-1 border-l-2 border-red-200 pl-3">
                                     <div className="flex justify-between">
                                         <span><Pizza className="h-4 w-4 mr-2 inline-block text-gray-400"/>Valor Base</span>
-                                        <span>{formatPrice(item.pizzaType?.basePrice || 0)}</span>
+                                        <span>{formatPrice(item.pizzaType.basePrice || 0)}</span>
                                     </div>
                                     {item.flavors?.map(flavor => (
                                         <div key={flavor.id} className="flex justify-between">
@@ -212,6 +235,10 @@ export const OrderTracker = ({ order }: OrderTrackerProps) => {
                         </div>
                     </div>
                 );
+              }
+              
+              return <div key={item.id}>Item desconhecido no pedido.</div>;
+              // *** FIM DA MODIFICAÇÃO ***
             })}
             <div className="flex justify-between items-center pt-4 border-t font-semibold text-xl">
               <span>Total do Pedido:</span>

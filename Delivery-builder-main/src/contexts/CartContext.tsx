@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 import { CartItem, PizzaType, PizzaFlavor, PizzaCrust, AppliedExtra, Beverage } from "@/types";
+import { toast } from "@/components/ui/use-toast";
 
-// 1. Adicionada a assinatura da função que estava faltando
 interface CartContextType {
   items: CartItem[];
   addItem: (
@@ -37,7 +37,7 @@ interface CartProviderProps {
 export const CartProvider = ({ children }: CartProviderProps) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  const addItem = (
+  const addItem = useCallback((
     pizzaType: PizzaType,
     flavors: PizzaFlavor[],
     crust: PizzaCrust | null,
@@ -56,41 +56,72 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     
     const totalPrice = (pizzaType.basePrice + flavorPrice + extrasPrice + crustPrice) * quantity;
 
+    // CORREÇÃO: Criando o item com a estrutura aninhada correta
     const newItem: CartItem = {
       id: `pizza-${Date.now()}`,
-      type: 'pizza',
       name: `${pizzaType.name} (${flavors.map(f => f.name).join(' / ')})`,
-      pizzaType,
-      flavors,
-      crust,
-      appliedExtras,
       observations,
       quantity,
       totalPrice,
+      item: {
+          itemType: 'PIZZA',
+          pizzaType,
+          flavors,
+          crust,
+          appliedExtras,
+      },
     };
 
     setItems((prev) => [...prev, newItem]);
-  };
+  }, []);
 
-  // 2. Implementação da lógica da função
-  const addBeverageToCart = (beverage: Beverage, quantity: number) => {
-    const newItem: CartItem = {
-        id: `beverage-${beverage.id}-${Date.now()}`,
-        type: 'beverage',
-        name: beverage.name,
-        beverage: beverage,
-        observations: '',
-        quantity: quantity,
-        totalPrice: beverage.price * quantity,
-    };
-    setItems((prev) => [...prev, newItem]);
-  };
+  const addBeverageToCart = useCallback((beverage: Beverage, quantity: number) => {
+    setItems((prevItems) => {
+        // CORREÇÃO: A verificação agora olha dentro de `item.beverage`
+        const existingItemIndex = prevItems.findIndex(
+            (cartItem) => cartItem.item.itemType === 'BEVERAGE' && cartItem.item.beverage.id === beverage.id
+        );
 
-  const removeItem = (id: string) => {
+        if (existingItemIndex > -1) {
+            const updatedItems = [...prevItems];
+            const existingItem = updatedItems[existingItemIndex];
+            const newQuantity = existingItem.quantity + quantity;
+            existingItem.quantity = newQuantity;
+            existingItem.totalPrice = existingItem.item.beverage.price * newQuantity;
+            
+            toast({
+                title: "Item atualizado!",
+                description: `${beverage.name} agora tem ${newQuantity} unidade(s) no carrinho.`,
+            });
+            return updatedItems;
+
+        } else {
+            // CORREÇÃO: Criando o item com a estrutura aninhada correta
+            const newItem: CartItem = {
+                id: `beverage-${beverage.id}-${Date.now()}`,
+                name: beverage.name,
+                observations: '',
+                quantity,
+                totalPrice: beverage.price * quantity,
+                item: {
+                    itemType: 'BEVERAGE',
+                    beverage,
+                },
+            };
+            toast({
+                title: "Bebida adicionada!",
+                description: `${quantity}x ${beverage.name} foi adicionado(a) ao seu carrinho.`,
+            });
+            return [...prevItems, newItem];
+        }
+    });
+  }, []);
+
+  const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const updateItemQuantity = (id: string, quantity: number) => {
+  const updateItemQuantity = useCallback((id: string, quantity: number) => {
     if (quantity <= 0) {
       removeItem(id);
       return;
@@ -105,26 +136,26 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         return item;
       }),
     );
-  };
+  }, [removeItem]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setItems([]);
-  };
+  }, []);
 
-  const getTotalPrice = () => {
+  const getTotalPrice = useCallback(() => {
     return items.reduce((sum, item) => sum + item.totalPrice, 0);
-  };
+  }, [items]);
 
-  const getTotalItems = () => {
+  const getTotalItems = useCallback(() => {
     return items.reduce((sum, item) => sum + item.quantity, 0);
-  };
+  }, [items]);
 
   return (
     <CartContext.Provider
       value={{
         items,
         addItem,
-        addBeverageToCart, // 3. Disponibilização da função para os componentes filhos
+        addBeverageToCart,
         removeItem,
         updateItemQuantity,
         clearCart,
