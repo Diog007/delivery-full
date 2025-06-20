@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, String> {
+
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     List<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     List<Order> findByCustomerUser_IdOrderByCreatedAtDesc(String customerId);

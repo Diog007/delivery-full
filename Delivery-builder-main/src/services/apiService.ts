@@ -57,6 +57,8 @@ const customerApi = {
   register: (data: CustomerDtos.RegisterRequest) => baseRequest<{ message: string }>('/customer/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   createOrder: (orderData: OrderDtos.CreateOrderDto) => baseRequest<Order>('/orders', { method: 'POST', body: JSON.stringify(orderData) }),
   getCustomerOrders: () => baseRequest<Order[]>('/customer/orders'),
+    forgotPassword: (email: string) => baseRequest<{ message: string }>('/customer/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, password: string) => baseRequest<{ message: string }>('/customer/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
 };
 
 const adminApi = {

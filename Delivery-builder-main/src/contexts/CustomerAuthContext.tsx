@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, ReactNode, useCallback, useMemo, useEffect } from "react";
 import { api } from "@/services/apiService";
-import { AuthDtos } from "@/dto"; // Importa o namespace dos DTOs
+import { AuthDtos } from "@/dto"; 
 
 function isLoginResponse(data: any): data is AuthDtos.LoginResponse {
   return (
@@ -19,7 +19,7 @@ interface CustomerAuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: any) => Promise<boolean>;
   logout: () => void;
-  isLoading: boolean; // Adicionado para feedback visual
+  isLoading: boolean;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
@@ -32,7 +32,7 @@ export const useCustomerAuth = () => {
 
 export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   const [customerName, setCustomerName] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Estado de loading
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("customerAuthToken");
@@ -55,7 +55,16 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
       return false;
     } catch (error) {
       console.error("Falha no login do cliente:", error);
-      alert(`Falha no login: ${error.message}`); // Exibe a mensagem de erro da API
+
+      // *** INÍCIO DA MELHORIA ***
+      // Verificamos a mensagem de erro para fornecer um feedback mais preciso.
+      if (error.message.includes("Usuário registrado com o Google")) {
+        alert("Essa conta foi criada com o Google. Por favor, use o botão 'Login com Google'.");
+      } else {
+         // Mensagem genérica para outros erros (como senha incorreta)
+        alert("E-mail ou senha inválidos. Por favor, tente novamente.");
+      }
+      // *** FIM DA MELHORIA ***
       return false;
     } finally {
       setIsLoading(false);
@@ -66,11 +75,9 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       await api.customer.register(data);
-      // Após o registro bem-sucedido, tenta fazer o login automaticamente
       return await login(data.email, data.password);
     } catch(error) {
       console.error("Falha no registro do cliente:", error);
-      // REFACTOR: Exibe a mensagem de erro específica vinda do backend (ex: "E-mail já em uso")
       alert(`Falha no registro: ${error.message}`);
       return false;
     } finally {
@@ -81,7 +88,6 @@ export const CustomerAuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(() => {
     localStorage.removeItem("customerAuthToken");
     localStorage.removeItem("customerName");
-    // Limpa também o token de admin para evitar conflitos
     localStorage.removeItem("authToken");
     localStorage.removeItem("adminName");
     setCustomerName(null);

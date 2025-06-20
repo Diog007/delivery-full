@@ -14,7 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +26,8 @@ public class CustomerService {
     private final PasswordEncoder passwordEncoder;
     private final OrderRepository orderRepository;
     private final AddressRepository addressRepository;
+    private final EmailService emailService;
+
 
     public CustomerUser register(RegisterRequest req) {
         if (customerUserRepository.existsByEmail(req.email())) {
@@ -118,5 +122,40 @@ public class CustomerService {
                 address.getCity(),
                 address.getZipCode()
         );
+    }
+
+    @Transactional
+    public void initiatePasswordReset(String email) {
+        CustomerUser customer = customerUserRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Não foi encontrado um usuário com este e-mail."));
+
+        // Garante que contas do Google não possam redefinir a senha
+        if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
+            throw new RuntimeException("Contas criadas com o Google não podem ter a senha redefinida.");
+        }
+
+        String token = UUID.randomUUID().toString();
+        customer.setPasswordResetToken(token);
+        customer.setPasswordResetTokenExpiry(LocalDateTime.now().plusHours(1)); // Token válido por 1 hora
+        customerUserRepository.save(customer);
+
+        emailService.sendPasswordResetEmail(customer.getEmail(), token);
+    }
+
+    @Transactional
+    public void completePasswordReset(String token, String newPassword) {
+        CustomerUser customer = customerUserRepository.findAll().stream()
+                .filter(c -> token.equals(c.getPasswordResetToken()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Token de redefinição inválido."));
+
+        if (customer.getPasswordResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token de redefinição expirado.");
+        }
+
+        customer.setPassword(passwordEncoder.encode(newPassword));
+        customer.setPasswordResetToken(null);
+        customer.setPasswordResetTokenExpiry(null);
+        customerUserRepository.save(customer);
     }
 }

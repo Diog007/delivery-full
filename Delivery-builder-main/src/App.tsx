@@ -21,6 +21,7 @@ import { Cart } from "@/pages/client/Cart";
 import { Checkout } from "@/pages/client/Checkout";
 import { OrderTracking } from "@/pages/client/OrderTracking";
 import { MyOrders } from "./pages/client/MyOrders";
+import { OAuth2RedirectHandler } from './pages/client/OAuth2RedirectHandler'; // NOVO
 
 // Admin Pages
 import { AdminLogin } from "@/pages/admin/Login";
@@ -31,6 +32,8 @@ import { OrderManagement } from "@/pages/admin/OrderManagement";
 // General Pages
 import NotFound from "./pages/NotFound";
 import { CustomerManagement } from "./pages/admin/CustomerManagement";
+import { ResetPassword } from "./pages/client/ResetPassword";
+import { ForgotPassword } from "./pages/client/ForgotPassword";
 
 const queryClient = new QueryClient();
 
@@ -45,9 +48,13 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
+                  {/* NOVO: Rota para o callback do OAuth2 */}
+                  <Route path="/login/success" element={<OAuth2RedirectHandler />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                  
                   {/* --- Rotas de Cliente --- */}
                   <Route path="/" element={<HomePage />} />
-                  {/* A rota /beverages foi removida */}
                   <Route path="/customize" element={<PizzaCustomization />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />

@@ -1,5 +1,6 @@
 package com.pizzadelivery.backend.security;
 
+import com.pizzadelivery.backend.entity.CustomerUser; // Adicione esta importação se faltar
 import com.pizzadelivery.backend.repository.AdminRepository;
 import com.pizzadelivery.backend.repository.CustomerUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,18 +27,26 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return new User(
                     admin.get().getUsername(),
                     admin.get().getPassword(),
-                    // AQUI ESTÁ A CORREÇÃO PARA ADMIN
                     List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
             );
         }
 
         // Se não for admin, tenta encontrar como Cliente (usando email como username)
-        var customer = customerUserRepository.findByEmail(username);
-        if (customer.isPresent()) {
+        var customerOpt = customerUserRepository.findByEmail(username);
+        if (customerOpt.isPresent()) {
+            CustomerUser customer = customerOpt.get();
+
+            // *** INÍCIO DA CORREÇÃO ***
+            // Se o usuário foi encontrado mas não possui senha, significa que ele se
+            // cadastrou via Google. Lançamos uma exceção específica para tratar isso.
+            if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
+                throw new UsernameNotFoundException("Usuário registrado com o Google. Por favor, utilize o botão 'Login com Google'.");
+            }
+            // *** FIM DA CORREÇÃO ***
+
             return new User(
-                    customer.get().getEmail(),
-                    customer.get().getPassword(),
-                    // AQUI ESTÁ A CORREÇÃO PARA CLIENTE
+                    customer.getEmail(),
+                    customer.getPassword(),
                     List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
             );
         }

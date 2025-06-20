@@ -52,4 +52,30 @@ public class CustomerAuthController {
 
         return ResponseEntity.ok(new CustomerDtos.LoginResponse(token, user.getName(), user.getEmail()));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> payload) {
+        try {
+            customerService.initiatePasswordReset(payload.get("email"));
+            return ResponseEntity.ok(Collections.singletonMap("message", "Se um usuário com este e-mail existir, um link de redefinição foi enviado."));
+        } catch (RuntimeException e) {
+
+
+
+            // Mantém a resposta genérica para o frontend por segurança
+            return ResponseEntity.ok(Collections.singletonMap("message", "Se um usuário com este e-mail existir, um link de redefinição foi enviado."));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> payload) {
+        try {
+            String token = payload.get("token");
+            String newPassword = payload.get("password");
+            customerService.completePasswordReset(token, newPassword);
+            return ResponseEntity.ok(Collections.singletonMap("message", "Senha redefinida com sucesso!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", e.getMessage()));
+        }
+    }
 }
