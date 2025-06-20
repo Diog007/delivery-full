@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:8080") // <-- ADICIONE ESTA LINHA
+@CrossOrigin(origins = "http://localhost:8080")
 public class AdminController {
 
     private final DashboardService dashboardService;
@@ -186,4 +186,18 @@ public class AdminController {
     public ResponseEntity<Beverage> updateBeverage(@PathVariable String id, @RequestBody MenuDtos.BeverageRequestDto beverageDto) {
         return ResponseEntity.ok(menuService.updateBeverage(id, beverageDto));
     }
+
+    @PostMapping("/beverages/{id}/image")
+    public ResponseEntity<Beverage> uploadBeverageImage(@PathVariable String id, @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(menuService.saveBeverageImage(id, file));
+    }
+
+    // --- INÍCIO DA CORREÇÃO ---
+    // Adicionando o endpoint que faltava para deletar uma bebida
+    @DeleteMapping("/beverages/{id}")
+    public ResponseEntity<Void> deleteBeverage(@PathVariable String id) {
+        menuService.deleteBeverage(id);
+        return ResponseEntity.noContent().build();
+    }
+    // --- FIM DA CORREÇÃO ---
 }

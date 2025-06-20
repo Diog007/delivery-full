@@ -312,6 +312,7 @@ public class MenuService {
         return beverageRepo.save(beverage);
     }
 
+    // --- INÍCIO DA CORREÇÃO ---
     @Transactional
     public Beverage saveBeverageImage(String beverageId, MultipartFile file) {
         Beverage beverage = beverageRepo.findById(beverageId)
@@ -320,6 +321,7 @@ public class MenuService {
         beverage.setImageUrl(imageUrl);
         return beverageRepo.save(beverage);
     }
+    // --- FIM DA CORREÇÃO ---
 
     public void deleteBeverage(String id) {
         beverageRepo.deleteById(id);
