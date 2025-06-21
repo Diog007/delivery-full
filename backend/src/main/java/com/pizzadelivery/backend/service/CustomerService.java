@@ -98,9 +98,17 @@ public class CustomerService {
     }
 
     private CustomerDtos.CustomerResponseDto convertToDto(CustomerUser user) {
-        List<AddressDto> addressDtos = user.getAddresses().stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        List<AddressDto> addressDtos = user.getAddresses() != null
+                ? user.getAddresses().stream().map(this::convertToDto).collect(Collectors.toList())
+                : List.of();
+
+        boolean isEmailVerified = user.getEmailVerified() != null && user.getEmailVerified();
+
+        // --- INÍCIO DA ALTERAÇÃO ---
+        // Busca todos os pedidos do cliente para calcular os totais
+        List<Order> orders = orderRepository.findByCustomerUser_IdOrderByCreatedAtDesc(user.getId());
+        int totalOrders = orders.size();
+        double totalSpent = orders.stream().mapToDouble(Order::getTotalAmount).sum();
 
         return new CustomerDtos.CustomerResponseDto(
                 user.getId(),
@@ -108,8 +116,17 @@ public class CustomerService {
                 user.getEmail(),
                 user.getWhatsapp(),
                 user.getCpf(),
-                addressDtos
+                addressDtos,
+                user.getGoogleId(),
+                user.getPictureUrl(),
+                isEmailVerified,
+                user.getLocale(),
+                user.getLastLogin(),
+                user.getCreatedAt(),
+                totalOrders,
+                totalSpent
         );
+        // --- FIM DA ALTERAÇÃO ---
     }
 
     private AddressDto convertToDto(Address address) {

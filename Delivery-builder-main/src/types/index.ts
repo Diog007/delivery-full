@@ -183,4 +183,14 @@ export interface Customer {
   whatsapp: string;
   cpf: string;
   addresses: Address[];
+  googleId?: string;
+  pictureUrl?: string;
+  emailVerified?: boolean;
+  locale?: string;
+  lastLogin?: string;
+  createdAt?: string;
+  // --- INÍCIO DA ALTERAÇÃO ---
+  totalOrders: number;
+  totalSpent: number;
+  // --- FIM DA ALTERAÇÃO ---
 }

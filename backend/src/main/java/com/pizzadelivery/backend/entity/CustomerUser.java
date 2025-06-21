@@ -6,8 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime; // NOVO
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -31,9 +32,26 @@ public class CustomerUser {
 
     private String whatsapp;
     private String cpf;
-    private String birthDate;
 
-    // CAMPOS NOVOS PARA REDEFINIÇÃO DE SENHA
+    @Column(unique = true)
+    private String googleId;
+
+    private String pictureUrl;
+
+    private Boolean emailVerified;
+
+    private String locale;
+
+    private LocalDateTime lastLogin;
+
+    // --- INÍCIO DA CORREÇÃO ---
+    // A propriedade nullable = false foi removida para permitir que o Hibernate
+    // adicione a coluna em tabelas que já contêm dados.
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+    // --- FIM DA CORREÇÃO ---
+
     private String passwordResetToken;
     private LocalDateTime passwordResetTokenExpiry;
 
