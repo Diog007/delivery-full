@@ -14,6 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// IMPORTAÇÕES ADICIONADAS PARA O TOOLTIP
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 // Tipos e utilitários
 type SortByType = 'name' | 'email' | 'lastLogin' | 'totalSpent' | 'totalOrders';
@@ -249,7 +252,18 @@ const CustomerDetailPage: React.FC<CustomerDetailProps> = ({ customer, onBack, o
                 <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <Mail className="h-5 w-5 text-blue-500" />
                     <div><p className="text-gray-500">Email</p><p className="font-medium text-gray-800">{customer.email}</p></div>
-                    {customer.emailVerified && <CheckCircle className="h-4 w-4 text-green-500" title="Email verificado"/>}
+                    {/* INÍCIO DA CORREÇÃO */}
+                    {customer.emailVerified && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Email verificado</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {/* FIM DA CORREÇÃO */}
                 </div>
                 {customer.whatsapp && <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"><Phone className="h-5 w-5 text-green-500" /><div><p className="text-gray-500">WhatsApp</p><p className="font-medium text-gray-800">{customer.whatsapp}</p></div></div>}
                 {customer.googleId && <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"><Globe className="h-5 w-5 text-purple-500" /><div><p className="text-gray-500">Login</p><p className="font-medium text-gray-800">Vinculado ao Google</p></div></div>}
@@ -267,10 +281,10 @@ const CustomerDetailPage: React.FC<CustomerDetailProps> = ({ customer, onBack, o
             <Card>
                 <CardHeader><CardTitle>Informações da Conta</CardTitle></CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div><p className="text-sm text-gray-500 mb-1">CPF</p><div className="flex items-center space-x-2"><p className="text-sm font-medium text-gray-800">{customer.cpf || "Não informado"}</p></div></div>
-                     <div><p className="text-sm text-gray-500 mb-1">Localidade (do Google)</p><div className="flex items-center space-x-2"><p className="text-sm font-medium text-gray-800">{customer.locale || "Não informado"}</p></div></div>
-                     <div><p className="text-sm text-gray-500 mb-1">Último Acesso</p><div className="flex items-center space-x-2"><Calendar className="h-4 w-4 text-gray-400" /><span className="text-sm font-medium text-gray-800">{formatDate(customer.lastLogin)}</span></div></div>
-                     <div><p className="text-sm text-gray-500 mb-1">Data de Cadastro</p><div className="flex items-center space-x-2"><Calendar className="h-4 w-4 text-gray-400" /><span className="text-sm font-medium text-gray-800">{formatDate(customer.createdAt)}</span></div></div>
+                      <div><p className="text-sm text-gray-500 mb-1">CPF</p><div className="flex items-center space-x-2"><p className="text-sm font-medium text-gray-800">{customer.cpf || "Não informado"}</p></div></div>
+                      <div><p className="text-sm text-gray-500 mb-1">Localidade (do Google)</p><div className="flex items-center space-x-2"><p className="text-sm font-medium text-gray-800">{customer.locale || "Não informado"}</p></div></div>
+                      <div><p className="text-sm text-gray-500 mb-1">Último Acesso</p><div className="flex items-center space-x-2"><Calendar className="h-4 w-4 text-gray-400" /><span className="text-sm font-medium text-gray-800">{formatDate(customer.lastLogin)}</span></div></div>
+                      <div><p className="text-sm text-gray-500 mb-1">Data de Cadastro</p><div className="flex items-center space-x-2"><Calendar className="h-4 w-4 text-gray-400" /><span className="text-sm font-medium text-gray-800">{formatDate(customer.createdAt)}</span></div></div>
                 </CardContent>
             </Card>
 
@@ -410,7 +424,7 @@ export const CustomerManagement = () => {
                     onDelete={handleDeleteCustomer}
                 />
                 {isEditDialogOpen && (
-                     <EditCustomerDialog
+                    <EditCustomerDialog
                         customer={selectedCustomer}
                         open={isEditDialogOpen}
                         onOpenChange={setIsEditDialogOpen}
